@@ -130,3 +130,14 @@ footer {
   border: 1px solid rgba(255,255,255,0.3);
   color: white;
 }
+.install-btn {
+  margin-top: 12px;
+  background: linear-gradient(90deg, #00b894, #00cec9);
+  color: white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+}
+.install-btn.hidden { display: none; }

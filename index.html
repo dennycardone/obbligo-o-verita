@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Obbligo o Verità</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔥 Obbligo o Verità 🔥</h1>
+      <p>Gioco di società per amici e coppie</p>
+    </header>
+
+    <!-- Setup -->
+    <section id="setup" class="panel">
+      <h2>Imposta il gioco</h2>
+      <div class="mode-selector">
+        <label><input type="radio" name="mode" value="classica" checked> Classica</label>
+        <label><input type="radio" name="mode" value="piccante"> Piccante 🌶️</label>
+      </div>
+      <div id="players-list">
+        <div class="player-input">
+          <input type="text" placeholder="Nome giocatore 1" class="player-name">
+        </div>
+      </div>
+      <button id="add-player">+ Aggiungi giocatore</button>
+      <button id="start-game" class="primary">Inizia il gioco</button>
+    </section>
+
+    <!-- Game -->
+    <section id="game" class="panel hidden">
+      <div class="game-header">
+        <h2>Turno di <span id="current-player"></span></h2>
+        <span class="mode-badge" id="mode-badge"></span>
+      </div>
+      <div class="choice-buttons">
+        <button id="truth-btn" class="big-btn truth">Verità</button>
+        <button id="dare-btn" class="big-btn dare">Obbligo</button>
+      </div>
+      <div id="prompt-box" class="prompt-box hidden">
+        <h3 id="prompt-type"></h3>
+        <p id="prompt-text"></p>
+        <div class="actions">
+          <button id="done-btn">Fatto!</button>
+          <button id="skip-btn">Salta</button>
+          <button id="new-prompt-btn">Cambia</button>
+        </div>
+      </div>
+      <button id="next-player" class="primary hidden">Prossimo giocatore</button>
+    </section>
+
+    <footer>
+      <button id="reset-game" class="hidden">Nuova partita</button>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

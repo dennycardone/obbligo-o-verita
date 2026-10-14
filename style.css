@@ -1,0 +1,132 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #f0f0f0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.container {
+  max-width: 500px;
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  backdrop-filter: blur(10px);
+}
+header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+h1 {
+  font-size: 2.2rem;
+  background: linear-gradient(90deg, #ff6b6b, #feca57);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.hidden { display: none !important; }
+.mode-selector {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin: 10px 0;
+}
+.player-input input {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.1);
+  color: white;
+  font-size: 1rem;
+}
+button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
+}
+button:active { transform: scale(0.97); }
+.primary {
+  background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+  color: white;
+  font-weight: 600;
+}
+.big-btn {
+  flex: 1;
+  padding: 20px;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+.truth { background: #0984e3; color: white; }
+.dare { background: #d63031; color: white; }
+.choice-buttons {
+  display: flex;
+  gap: 15px;
+  margin: 20px 0;
+}
+.prompt-box {
+  background: rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  margin: 15px 0;
+}
+.prompt-box h3 {
+  color: #feca57;
+  margin-bottom: 10px;
+}
+#prompt-text {
+  font-size: 1.15rem;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.actions button {
+  background: rgba(255,255,255,0.15);
+  color: white;
+}
+.mode-badge {
+  background: #feca57;
+  color: #1a1a2e;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+footer {
+  margin-top: 20px;
+  text-align: center;
+}
+#reset-game {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+}

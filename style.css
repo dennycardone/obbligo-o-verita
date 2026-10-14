@@ -3,141 +3,238 @@
   margin: 0;
   padding: 0;
 }
+
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   color: #f0f0f0;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
 }
+
 .container {
-  max-width: 500px;
+  max-width: 480px;
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-  backdrop-filter: blur(10px);
-}
-header {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  padding: 32px 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
   text-align: center;
-  margin-bottom: 30px;
 }
+
+header {
+  margin-bottom: 28px;
+}
+
 h1 {
-  font-size: 2.2rem;
+  font-size: 2.1rem;
   background: linear-gradient(90deg, #ff6b6b, #feca57);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  margin-bottom: 6px;
+  font-weight: 700;
 }
+
+header p {
+  opacity: 0.85;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 16px;
+  align-items: center;
 }
+
+.panel h2 {
+  font-size: 1.25rem;
+  margin-bottom: 4px;
+}
+
 .hidden { display: none !important; }
+
 .mode-selector {
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
   justify-content: center;
-  margin: 10px 0;
+  width: 100%;
+  margin: 8px 0 16px;
 }
+
+.mode-selector label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.08);
+  padding: 8px 14px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+
+.mode-selector label:hover {
+  background: rgba(255,255,255,0.14);
+}
+
+.mode-selector input {
+  accent-color: #feca57;
+}
+
+#players-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .player-input input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 16px;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(255,255,255,0.1);
   color: white;
   font-size: 1rem;
+  text-align: center;
 }
+
+.player-input input::placeholder {
+  color: rgba(255,255,255,0.5);
+}
+
 button {
-  padding: 12px 20px;
+  padding: 14px 22px;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 1rem;
   cursor: pointer;
-  transition: transform 0.1s, background 0.2s;
+  transition: transform 0.1s, opacity 0.2s;
+  font-weight: 600;
+  width: 100%;
+  max-width: 320px;
 }
+
 button:active { transform: scale(0.97); }
+
 .primary {
   background: linear-gradient(90deg, #ff6b6b, #ee5a24);
   color: white;
-  font-weight: 600;
 }
+
 .big-btn {
-  flex: 1;
-  padding: 20px;
-  font-size: 1.3rem;
-  font-weight: bold;
+  padding: 22px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  max-width: none;
 }
+
 .truth { background: #0984e3; color: white; }
 .dare { background: #d63031; color: white; }
+
 .choice-buttons {
   display: flex;
-  gap: 15px;
-  margin: 20px 0;
+  gap: 12px;
+  width: 100%;
+  margin: 12px 0;
 }
+
 .prompt-box {
-  background: rgba(255,255,255,0.08);
-  border-radius: 16px;
-  padding: 20px;
-  text-align: center;
-  margin: 15px 0;
+  background: rgba(255,255,255,0.09);
+  border-radius: 18px;
+  padding: 22px 18px;
+  width: 100%;
+  margin: 8px 0;
 }
+
 .prompt-box h3 {
   color: #feca57;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  font-size: 1.3rem;
 }
+
 #prompt-text {
   font-size: 1.15rem;
-  line-height: 1.5;
-  margin-bottom: 15px;
+  line-height: 1.55;
+  margin-bottom: 18px;
 }
+
 .actions {
   display: flex;
   gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
+  width: 100%;
 }
+
 .actions button {
   background: rgba(255,255,255,0.15);
   color: white;
+  max-width: 110px;
+  padding: 12px 10px;
+  font-size: 0.95rem;
 }
+
 .mode-badge {
   background: #feca57;
   color: #1a1a2e;
-  padding: 4px 12px;
+  padding: 6px 14px;
   border-radius: 20px;
   font-size: 0.85rem;
-  font-weight: bold;
+  font-weight: 700;
 }
+
 .game-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+  gap: 10px;
 }
+
+.game-header h2 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
 footer {
-  margin-top: 20px;
-  text-align: center;
+  margin-top: 24px;
+  width: 100%;
 }
+
 #reset-game {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.3);
   color: white;
+  max-width: 200px;
 }
+
 .install-btn {
-  margin-top: 12px;
+  margin-top: 14px;
   background: linear-gradient(90deg, #00b894, #00cec9);
   color: white;
   font-weight: 600;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border-radius: 30px;
-  border: none;
-  cursor: pointer;
+  width: auto;
+  max-width: 220px;
 }
+
 .install-btn.hidden { display: none; }
+
+@media (max-width: 420px) {
+  .container { padding: 24px 16px; }
+  h1 { font-size: 1.85rem; }
+  .mode-selector { gap: 8px; }
+  .choice-buttons { flex-direction: column; }
+  .big-btn { padding: 18px; }
+}

@@ -13,371 +13,219 @@
 <meta name="apple-mobile-web-app-title" content="Obbligo o Verità">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tilt+Neon&family=Outfit:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #07060d;
-    --panel: #110f1c;
-    --panel-2: #181527;
-    --line: #2a2540;
-    --text: #f2f0ff;
-    --muted: #8f89ad;
+    --bg: #06050b;
+    --panel: rgba(255, 255, 255, .045);
+    --panel-2: rgba(255, 255, 255, .08);
+    --line: rgba(255, 255, 255, .11);
+    --text: #f6f3ff;
+    --muted: #9a93b8;
     --dare: #ff2bd6;
     --truth: #22e3ff;
-    --l1: #3dffa2;
-    --l2: #ffb627;
-    --l3: #ff3d6e;
+    --l1: #ffc247;
+    --l2: #ff7a3d;
+    --l3: #ff2d6f;
     --accent: var(--l1);
-    --radius: 18px;
-    --display: "Unbounded", "Arial Black", system-ui, sans-serif;
-    --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --neon: "Tilt Neon", "Arial Rounded MT Bold", system-ui, sans-serif;
+    --body: "Outfit", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
-  body {
-    margin: 0;
-    font-family: var(--body);
-    color: var(--text);
-    background:
-      radial-gradient(60vmax 60vmax at 110% -10%, rgba(255, 43, 214, .16), transparent 60%),
-      radial-gradient(60vmax 60vmax at -10% 110%, rgba(34, 227, 255, .14), transparent 60%),
-      var(--bg);
-    background-attachment: fixed;
-    min-height: 100%;
-  }
+  body { margin: 0; font-family: var(--body); color: var(--text); background: var(--bg); min-height: 100%; overflow-x: hidden; }
   body[data-level="1"] { --accent: var(--l1); }
   body[data-level="2"] { --accent: var(--l2); }
   body[data-level="3"] { --accent: var(--l3); }
-
-  button, input { font: inherit; color: inherit; }
-  button { cursor: pointer; border: 0; background: none; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; padding: 0; }
   [hidden] { display: none !important; }
 
-  .app {
-    max-width: 520px;
-    margin: 0 auto;
-    min-height: 100dvh;
-    padding: 16px 18px 28px;
-    display: flex;
-    flex-direction: column;
-  }
+  /* ---------- Sfondo vivo: due aloni che si muovono lenti, tinti dal livello ---------- */
+  .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg); }
+  .bg i { position: absolute; width: 120vmax; height: 120vmax; border-radius: 50%; will-change: transform; }
+  .bg i:nth-child(1) { top: -70vmax; right: -70vmax; opacity: .34; background: radial-gradient(circle, var(--accent) 0%, transparent 62%); animation: drift 19s ease-in-out infinite alternate; }
+  .bg i:nth-child(2) { bottom: -75vmax; left: -75vmax; opacity: .22; background: radial-gradient(circle, var(--dare) 0%, transparent 60%); animation: drift 24s ease-in-out infinite alternate-reverse; }
+  .bg::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px); background-size: 22px 22px; mask-image: linear-gradient(#000, transparent 70%); -webkit-mask-image: linear-gradient(#000, transparent 70%); }
 
-  /* ---------- Header ---------- */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 22px;
-  }
-  .logo {
-    font-family: var(--display);
-    font-weight: 800;
-    font-size: 17px;
-    letter-spacing: .02em;
-    line-height: 1.1;
-    margin: 0;
-    flex: 1;
-  }
-  .logo .d { color: var(--dare); text-shadow: 0 0 14px rgba(255, 43, 214, .7); }
-  .logo .t { color: var(--truth); text-shadow: 0 0 14px rgba(34, 227, 255, .7); }
-  .logo .o { color: var(--muted); font-weight: 500; font-size: .75em; }
-  .icon-btn {
-    width: 44px; height: 44px;
-    border-radius: 14px;
-    border: 1px solid var(--line);
-    background: var(--panel);
-    display: grid; place-items: center;
-    transition: border-color .2s, box-shadow .2s, transform .1s;
-  }
-  .icon-btn:active { transform: scale(.94); }
-  .icon-btn:hover, .icon-btn:focus-visible { border-color: var(--truth); box-shadow: 0 0 14px rgba(34, 227, 255, .35); outline: none; }
+  .app { max-width: 520px; margin: 0 auto; min-height: 100dvh; padding: 18px 18px 30px; display: flex; flex-direction: column; }
+
+  /* ---------- Insegna ---------- */
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+  .logo { font-family: var(--neon); font-weight: 400; font-size: 30px; line-height: .95; margin: 0; flex: 1; letter-spacing: .01em; }
+  .tube { color: #fff; }
+  .tube.d { text-shadow: 0 0 3px #fff, 0 0 9px var(--dare), 0 0 22px var(--dare), 0 0 44px var(--dare); animation: flicker 7s linear infinite; }
+  .tube.t { text-shadow: 0 0 3px #fff, 0 0 9px var(--truth), 0 0 22px var(--truth), 0 0 44px var(--truth); }
+  .logo .o { font-family: var(--body); font-size: 14px; color: var(--muted); font-style: italic; margin: 0 4px; }
+  .icon-btn { width: 46px; height: 46px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); display: grid; place-items: center; backdrop-filter: blur(8px); transition: transform .12s, border-color .2s, box-shadow .2s; }
+  .icon-btn:active { transform: scale(.92); }
+  .icon-btn:focus-visible { outline: 2px solid var(--truth); outline-offset: 2px; }
   .icon-btn svg { width: 22px; height: 22px; }
-  .install-btn {
-    height: 44px;
-    padding: 0 14px;
-    border-radius: 14px;
-    font-weight: 700;
-    font-size: 14px;
-    color: #06120c;
-    background: var(--l1);
-    box-shadow: 0 0 18px rgba(61, 255, 162, .45);
-  }
+  .install-btn { height: 46px; padding: 0 16px; border-radius: 999px; font-weight: 700; font-size: 14px; color: #06120c; background: #3dffa2; box-shadow: 0 0 20px rgba(61, 255, 162, .5); }
 
-  /* ---------- Common ---------- */
-  .label {
-    font-family: var(--display);
-    font-weight: 500;
-    font-size: 11px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin: 0 0 10px;
-  }
-  .section { margin-bottom: 26px; }
-  .field {
-    width: 100%;
-    height: 52px;
-    padding: 0 16px;
-    border-radius: 14px;
-    border: 1px solid var(--line);
-    background: var(--panel);
-    outline: none;
-    transition: border-color .2s, box-shadow .2s;
-  }
-  .field::placeholder { color: #5f5a7c; }
-  .field:focus { border-color: var(--truth); box-shadow: 0 0 0 3px rgba(34, 227, 255, .15); }
-  .btn {
-    height: 56px;
-    width: 100%;
-    border-radius: 16px;
-    font-family: var(--display);
-    font-weight: 800;
-    font-size: 15px;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    transition: transform .1s, opacity .2s, box-shadow .2s;
-  }
+  /* ---------- Comuni ---------- */
+  .label { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  .label b { font-family: var(--neon); font-weight: 400; font-size: 15px; letter-spacing: 0; color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+  .label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+  .section { margin-bottom: 28px; }
+  .field { width: 100%; height: 54px; padding: 0 18px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); outline: none; font-size: 16px; transition: border-color .2s, box-shadow .2s; }
+  .field::placeholder { color: #6a6488; }
+  .field:focus { border-color: var(--truth); box-shadow: 0 0 0 3px rgba(34, 227, 255, .16); }
+  select.field option, select.field optgroup { background: #14121f; color: var(--text); }
+  .btn { position: relative; overflow: hidden; height: 60px; width: 100%; border-radius: 18px; font-weight: 800; font-size: 16px; letter-spacing: .12em; text-transform: uppercase; transition: transform .12s, opacity .2s, box-shadow .2s; }
   .btn:active { transform: scale(.97); }
-  .btn:disabled { opacity: .35; cursor: not-allowed; box-shadow: none !important; }
-  .btn-primary {
-    color: #08070f;
-    background: var(--accent);
-    box-shadow: 0 0 26px color-mix(in srgb, var(--accent) 50%, transparent);
-  }
-  .btn-ghost {
-    border: 1px solid var(--line);
-    background: var(--panel);
-    font-size: 13px;
-  }
-  .btn-ghost:hover { border-color: var(--muted); }
-  .link-btn { color: var(--muted); font-size: 14px; padding: 10px 4px; }
-  .link-btn:hover { color: var(--text); }
+  .btn:disabled { opacity: .3; cursor: not-allowed; box-shadow: none !important; }
+  .btn-primary { color: #0b0710; background: linear-gradient(100deg, var(--accent), var(--dare)); box-shadow: 0 8px 30px -6px color-mix(in srgb, var(--accent) 70%, transparent), 0 0 0 1px rgba(255,255,255,.25) inset; }
+  .btn-primary:not(:disabled)::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.55), transparent); transform: skewX(-20deg); animation: shine 3.4s ease-in-out infinite; }
+  .btn-ghost { border: 1px solid var(--line); background: var(--panel); font-size: 13px; }
+  .link-btn { color: var(--muted); font-size: 15px; padding: 10px 4px; }
+  .hint { color: var(--muted); font-size: 13.5px; line-height: 1.45; margin: 10px 2px 0; min-height: 18px; }
+  #setupHint { text-align: center; color: var(--l1); }
 
-  /* ---------- Setup ---------- */
-  .add-row { display: flex; gap: 10px; }
+  /* ---------- Giocatori ---------- */
+  .add-row { display: flex; gap: 8px; }
   .add-row .field { flex: 1; min-width: 0; }
-  .add-btn {
-    width: 52px; height: 52px; flex: none;
-    border-radius: 14px;
-    background: var(--truth);
-    color: #04161a;
-    font-size: 28px; font-weight: 700; line-height: 1;
-    box-shadow: 0 0 18px rgba(34, 227, 255, .45);
-  }
-  .add-btn:active { transform: scale(.94); }
-  .gender { display: flex; flex: none; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel); }
-  .g-opt { width: 40px; height: 50px; font-size: 20px; color: var(--muted); opacity: .5; transition: opacity .15s, background .15s, color .15s; }
-  .g-opt.m[aria-checked="true"] { opacity: 1; color: var(--truth); background: rgba(34, 227, 255, .14); text-shadow: 0 0 10px var(--truth); }
-  .g-opt.f[aria-checked="true"] { opacity: 1; color: var(--dare); background: rgba(255, 43, 214, .14); text-shadow: 0 0 10px var(--dare); }
-  .chip { padding-left: 8px !important; }
-  .chip .g { font-size: 15px; font-weight: 700; }
-  .chip .g.M { color: var(--truth); background: rgba(34, 227, 255, .14); }
-  .chip .g.F { color: var(--dare); background: rgba(255, 43, 214, .14); }
-  .chip .g.U { color: #08070f; background: var(--l2); }
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding: 0; list-style: none; }
-  .chip {
-    display: flex; align-items: center; gap: 6px;
-    padding: 8px 8px 8px 14px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    background: var(--panel-2);
-    font-weight: 500;
-    animation: pop .25s ease-out;
-  }
-  .chip button {
-    width: 26px; height: 26px; border-radius: 50%;
-    background: #241f38; color: var(--muted);
-    font-size: 16px; line-height: 1;
-  }
-  .chip button:hover { color: var(--l3); }
-  .empty { color: var(--muted); font-size: 14px; margin: 14px 0 0; }
+  .gender { display: flex; flex: none; padding: 4px; gap: 2px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+  .g-opt { width: 38px; height: 44px; border-radius: 12px; font-size: 20px; color: var(--muted); opacity: .55; transition: all .15s; }
+  .g-opt.m[aria-checked="true"] { opacity: 1; color: #04161a; background: var(--truth); box-shadow: 0 0 14px rgba(34, 227, 255, .6); }
+  .g-opt.f[aria-checked="true"] { opacity: 1; color: #1c0418; background: var(--dare); box-shadow: 0 0 14px rgba(255, 43, 214, .6); }
+  .add-btn { width: 54px; height: 54px; flex: none; border-radius: 16px; background: #fff; color: #0b0710; font-size: 30px; font-weight: 500; line-height: 1; box-shadow: 0 0 22px rgba(255, 255, 255, .35); transition: transform .12s; }
+  .add-btn:active { transform: scale(.9) rotate(90deg); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+  .chip { display: flex; align-items: center; gap: 8px; padding: 5px 6px 5px 5px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel-2); font-weight: 500; font-size: 16px; animation: pop .3s cubic-bezier(.2, 1.4, .4, 1); }
+  .chip button { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,.07); color: var(--muted); font-size: 17px; line-height: 1; }
+  .chip .g { font-weight: 700; font-size: 16px; }
+  .chip .g.M { color: #04161a; background: var(--truth); box-shadow: 0 0 10px rgba(34, 227, 255, .55); }
+  .chip .g.F { color: #1c0418; background: var(--dare); box-shadow: 0 0 10px rgba(255, 43, 214, .55); }
+  .chip .g.U { color: #140c00; background: var(--l1); animation: pulse 1s ease-in-out infinite; }
+  .empty { color: var(--muted); font-size: 14px; margin: 14px 2px 0; }
 
+  /* ---------- Livelli ---------- */
   .levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .level {
-    --c: var(--l1);
-    padding: 16px 6px 14px;
-    border-radius: var(--radius);
-    border: 1px solid var(--line);
-    background: var(--panel);
-    text-align: center;
-    transition: border-color .2s, box-shadow .2s, transform .1s;
-  }
+  .level { --c: var(--l1); position: relative; padding: 14px 6px 14px; border-radius: 20px; border: 1px solid var(--line); background: var(--panel); text-align: center; transition: transform .15s, border-color .2s, box-shadow .25s, background .25s; }
   .level[data-level="2"] { --c: var(--l2); }
   .level[data-level="3"] { --c: var(--l3); }
-  .level .num {
-    display: block;
-    font-family: var(--display); font-weight: 800; font-size: 34px;
-    color: var(--c); opacity: .55;
-    transition: opacity .2s, text-shadow .2s;
-  }
-  .level .name { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: .08em; text-transform: uppercase; }
-  .level:active { transform: scale(.96); }
-  .level[aria-checked="true"] {
-    border-color: var(--c);
-    box-shadow: 0 0 22px color-mix(in srgb, var(--c) 40%, transparent), inset 0 0 22px color-mix(in srgb, var(--c) 10%, transparent);
-  }
-  .level[aria-checked="true"] .num { opacity: 1; text-shadow: 0 0 18px var(--c); }
+  .level .num { display: block; font-family: var(--neon); font-size: 50px; line-height: 1; color: var(--c); opacity: .45; transition: all .25s; }
+  .level .name { display: block; font-size: 13px; font-weight: 700; color: var(--muted); margin: 6px 0 10px; transition: color .2s; }
+  .heat { display: flex; justify-content: center; gap: 3px; }
+  .heat i { width: 9px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.12); }
+  .level[data-level="1"] .heat i:nth-child(-n+2), .level[data-level="2"] .heat i:nth-child(-n+3), .level[data-level="3"] .heat i:nth-child(-n+4) { background: var(--c); }
+  .level:active { transform: scale(.95); }
+  .level[aria-checked="true"] { transform: translateY(-4px); border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); box-shadow: 0 10px 34px -8px var(--c), 0 0 0 1px color-mix(in srgb, var(--c) 50%, transparent) inset; }
+  .level[aria-checked="true"] .num { opacity: 1; color: #fff; text-shadow: 0 0 4px #fff, 0 0 12px var(--c), 0 0 28px var(--c), 0 0 50px var(--c); }
+  .level[aria-checked="true"] .name { color: var(--text); }
+  .level[aria-checked="true"] .heat i { box-shadow: 0 0 8px var(--c); }
+  .level[aria-checked="true"] .heat i:nth-child(n+5), .level[data-level="2"][aria-checked="true"] .heat i:nth-child(4), .level[data-level="1"][aria-checked="true"] .heat i:nth-child(n+3) { box-shadow: none; }
+  #levelDesc { text-align: center; color: var(--accent); font-weight: 500; }
 
-  .plan { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .plan-opt { height: 52px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); font-weight: 700; color: var(--muted); transition: border-color .2s, box-shadow .2s, color .2s; }
-  .plan-opt[aria-checked="true"] { color: var(--text); border-color: var(--accent); box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 35%, transparent); }
-  .toggle-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 16px;
-    border-radius: 14px;
-    border: 1px solid var(--line);
-    background: var(--panel);
-    font-size: 15px;
-  }
-  .switch { position: relative; width: 50px; height: 30px; flex: none; }
+  /* ---------- Modalità e opzioni ---------- */
+  .plan { display: grid; grid-template-columns: 1fr 1fr; padding: 4px; gap: 4px; border-radius: 18px; border: 1px solid var(--line); background: var(--panel); }
+  .plan-opt { height: 46px; border-radius: 14px; font-weight: 700; font-size: 15px; color: var(--muted); transition: all .2s; }
+  .plan-opt[aria-checked="true"] { color: #0b0710; background: #fff; box-shadow: 0 0 18px rgba(255,255,255,.3); }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 18px; border: 1px solid var(--line); background: var(--panel); font-size: 16px; }
+  .switch { position: relative; width: 52px; height: 30px; flex: none; }
   .switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
-  .switch span { position: absolute; inset: 0; border-radius: 999px; background: #2a2540; transition: background .2s; pointer-events: none; }
-  .switch span::after {
-    content: ""; position: absolute; top: 4px; left: 4px;
-    width: 22px; height: 22px; border-radius: 50%; background: #fff;
-    transition: transform .2s;
-  }
-  .switch input:checked + span { background: var(--truth); box-shadow: 0 0 12px rgba(34, 227, 255, .5); }
-  .switch input:checked + span::after { transform: translateX(20px); }
+  .switch span { position: absolute; inset: 0; border-radius: 999px; background: rgba(255,255,255,.14); transition: background .2s, box-shadow .2s; pointer-events: none; }
+  .switch span::after { content: ""; position: absolute; top: 4px; left: 4px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .25s cubic-bezier(.2, 1.4, .4, 1); }
+  .switch input:checked + span { background: var(--accent); box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 70%, transparent); }
+  .switch input:checked + span::after { transform: translateX(22px); }
   .switch input:focus-visible + span { outline: 2px solid var(--truth); outline-offset: 2px; }
 
-  .spacer { flex: 1; }
-  .hint { color: var(--muted); font-size: 13px; text-align: center; margin: 10px 0 0; min-height: 18px; }
-
-  /* ---------- Game ---------- */
+  /* ---------- Partita ---------- */
   #game { display: flex; flex-direction: column; flex: 1; }
-  .game-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .badge {
-    font-family: var(--display); font-weight: 500; font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
-    padding: 7px 12px; border-radius: 999px;
-    color: var(--accent);
-    border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
-    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent);
-  }
-  .turn { text-align: center; margin: 22px 0 26px; }
-  .turn small { display: block; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; font-size: 12px; margin-bottom: 8px; }
-  .turn .who {
-    font-family: var(--display); font-weight: 800;
-    font-size: clamp(30px, 10vw, 46px);
-    line-height: 1.1;
-    overflow-wrap: anywhere;
-    text-shadow: 0 0 24px color-mix(in srgb, var(--accent) 70%, transparent);
-    animation: pop .35s ease-out;
-  }
+  .game-top { display: flex; align-items: center; justify-content: space-between; }
+  .badge { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; padding: 8px 14px; border-radius: 999px; color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 10%, transparent); box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .turn { text-align: center; margin: 30px 0 30px; }
+  .turn small { display: block; color: var(--muted); letter-spacing: .3em; text-transform: uppercase; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .turn .who { --g: var(--accent); font-family: var(--neon); font-size: clamp(46px, 15vw, 72px); line-height: 1.05; overflow-wrap: anywhere; color: #fff; text-transform: capitalize; text-shadow: 0 0 4px #fff, 0 0 14px var(--g), 0 0 34px var(--g), 0 0 70px var(--g); animation: nameIn .5s cubic-bezier(.2, 1.3, .4, 1); }
+  .turn .who[data-g="M"] { --g: var(--truth); }
+  .turn .who[data-g="F"] { --g: var(--dare); }
 
-  .choices { display: grid; gap: 14px; }
-  .choice {
-    --c: var(--dare);
-    height: 108px;
-    border-radius: 22px;
-    border: 2px solid var(--c);
-    background: color-mix(in srgb, var(--c) 9%, var(--panel));
-    color: var(--c);
-    font-family: var(--display); font-weight: 800; font-size: 26px; letter-spacing: .06em; text-transform: uppercase;
-    text-shadow: 0 0 16px var(--c);
-    box-shadow: 0 0 26px color-mix(in srgb, var(--c) 35%, transparent), inset 0 0 26px color-mix(in srgb, var(--c) 12%, transparent);
-    transition: transform .1s, box-shadow .2s;
-  }
-  .choice.truth { --c: var(--truth); }
-  .choice:active { transform: scale(.97); }
-  .choice:hover { box-shadow: 0 0 40px color-mix(in srgb, var(--c) 55%, transparent), inset 0 0 30px color-mix(in srgb, var(--c) 18%, transparent); }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; perspective: 900px; }
+  .choice { --c: var(--dare); position: relative; height: clamp(230px, 38vh, 320px); border-radius: 26px; border: 2px solid var(--c); background: linear-gradient(160deg, color-mix(in srgb, var(--c) 22%, transparent), rgba(10, 8, 18, .7) 60%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 12px; box-shadow: 0 0 30px -4px var(--c), 0 0 26px -8px var(--c) inset; transform: rotate(-2.5deg); transition: transform .18s cubic-bezier(.2, 1.4, .4, 1), box-shadow .2s; animation: glow 2.6s ease-in-out infinite; }
+  .choice.truth { --c: var(--truth); transform: rotate(2.5deg); animation-delay: 1.3s; }
+  .choice:active { transform: rotate(0) scale(.94); }
+  .choice svg { width: 54px; height: 54px; color: #fff; filter: drop-shadow(0 0 6px var(--c)) drop-shadow(0 0 14px var(--c)); }
+  .choice b { font-family: var(--neon); font-weight: 400; font-size: 30px; color: #fff; text-shadow: 0 0 4px #fff, 0 0 12px var(--c), 0 0 28px var(--c); }
+  .choice small { font-size: 13px; color: color-mix(in srgb, var(--c) 55%, #fff); text-align: center; line-height: 1.3; }
 
-  .loading { text-align: center; padding: 30px 0; }
-  .orb {
-    --c: var(--dare);
-    width: 110px; height: 110px; margin: 0 auto 24px;
-    position: relative;
-  }
-  .orb::before, .orb::after {
-    content: ""; position: absolute; inset: 0; border-radius: 50%;
-    border: 3px solid transparent;
-  }
-  .orb::before { border-top-color: var(--dare); border-right-color: var(--dare); filter: drop-shadow(0 0 8px var(--dare)); animation: spin 1s linear infinite; }
-  .orb::after { inset: 14px; border-bottom-color: var(--truth); border-left-color: var(--truth); filter: drop-shadow(0 0 8px var(--truth)); animation: spin 1.4s linear infinite reverse; }
-  .orb i {
-    position: absolute; inset: 38px; border-radius: 50%;
-    background: var(--c); box-shadow: 0 0 26px var(--c);
-    animation: pulse 1s ease-in-out infinite;
-  }
-  .loading p { margin: 0; color: var(--muted); font-size: 15px; min-height: 22px; }
+  .loading { text-align: center; padding: 36px 0; }
+  .orb { --c: var(--dare); width: 130px; height: 130px; margin: 0 auto 26px; position: relative; }
+  .orb::before, .orb::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 3px solid transparent; }
+  .orb::before { border-top-color: var(--dare); border-right-color: var(--dare); filter: drop-shadow(0 0 10px var(--dare)); animation: spin 1s linear infinite; }
+  .orb::after { inset: 16px; border-bottom-color: var(--truth); border-left-color: var(--truth); filter: drop-shadow(0 0 10px var(--truth)); animation: spin 1.5s linear infinite reverse; }
+  .orb i { position: absolute; inset: 46px; border-radius: 50%; background: var(--c); box-shadow: 0 0 30px var(--c), 0 0 60px var(--c); animation: pulse 1s ease-in-out infinite; }
+  .loading p { margin: 0; color: var(--muted); font-size: 16px; min-height: 22px; }
 
-  .card {
-    --c: var(--dare);
-    border-radius: 24px;
-    border: 2px solid var(--c);
-    background: color-mix(in srgb, var(--c) 7%, var(--panel));
-    box-shadow: 0 0 34px color-mix(in srgb, var(--c) 35%, transparent);
-    padding: 22px 20px 26px;
-    animation: reveal .45s cubic-bezier(.2, .9, .3, 1.2);
-  }
+  #result { perspective: 1100px; }
+  .card { --c: var(--dare); position: relative; border-radius: 28px; border: 2px solid var(--c); background: linear-gradient(165deg, color-mix(in srgb, var(--c) 20%, #0b0912), #0b0912 55%); box-shadow: 0 0 44px -6px var(--c), 0 0 30px -12px var(--c) inset; padding: 24px 22px 26px; transform-origin: center; animation: flip .6s cubic-bezier(.2, .9, .3, 1.15); }
   .card.truth { --c: var(--truth); }
-  .card .kind {
-    font-family: var(--display); font-weight: 800; font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
-    color: var(--c); text-shadow: 0 0 12px var(--c);
-    margin: 0 0 14px;
-  }
-  .card .text { margin: 0; font-size: 21px; line-height: 1.4; font-weight: 500; overflow-wrap: anywhere; }
-  .actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 18px; }
+  .card .kind { font-family: var(--neon); font-size: 22px; color: #fff; text-shadow: 0 0 4px #fff, 0 0 12px var(--c), 0 0 26px var(--c); margin: 0 0 14px; text-transform: capitalize; }
+  .card .text { margin: 0; font-size: 22px; line-height: 1.38; font-weight: 500; overflow-wrap: anywhere; }
+  .timer { display: flex; align-items: center; gap: 14px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .timer-btn { position: relative; width: 68px; height: 68px; flex: none; border-radius: 50%; display: grid; place-items: center; transition: transform .12s; box-shadow: 0 0 18px -2px var(--c), 0 0 14px -6px var(--c) inset; }
+  .timer-btn:active { transform: scale(.92); }
+  .timer-btn svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-btn circle { fill: none; stroke-width: 3.5; }
+  .timer-btn .trk { stroke: rgba(255,255,255,.12); }
+  .timer-btn .prg { stroke: var(--c); stroke-linecap: round; stroke-dasharray: 119.4; stroke-dashoffset: 0; transition: stroke-dashoffset .2s linear; }
+  .timer-btn span { font-family: var(--neon); font-size: 24px; color: #fff; text-shadow: 0 0 10px var(--c); }
+  .timer #timerLabel { font-size: 15px; color: var(--muted); line-height: 1.3; }
+  .timer.on #timerLabel { color: var(--text); }
+  .timer.done .timer-btn { animation: shake .5s; }
+  .timer.done #timerLabel { color: var(--c); font-weight: 700; }
+  .actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; margin-top: 18px; }
 
-  .error {
-    border-radius: var(--radius);
-    border: 1px solid var(--l3);
-    background: rgba(255, 61, 110, .08);
-    padding: 18px;
-  }
-  .error h3 { margin: 0 0 6px; font-size: 16px; color: var(--l3); }
-  .error p { margin: 0; color: #d9c9d2; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+  .error { border-radius: 22px; border: 1px solid var(--l3); background: rgba(255, 45, 111, .09); padding: 20px; }
+  .error h3 { margin: 0 0 8px; font-size: 18px; color: var(--l3); }
+  .error p { margin: 0; color: #e6d6de; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
   .error .actions { grid-template-columns: 1fr 1fr; }
 
-  /* ---------- Settings ---------- */
-  .overlay {
-    position: fixed; inset: 0; z-index: 10;
-    background: rgba(4, 3, 9, .78);
-    backdrop-filter: blur(6px);
-    display: flex; align-items: flex-end; justify-content: center;
-    animation: fade .2s;
-  }
-  .sheet {
-    width: 100%; max-width: 520px; max-height: 92dvh; overflow: auto;
-    background: var(--panel);
-    border: 1px solid var(--line); border-bottom: 0;
-    border-radius: 26px 26px 0 0;
-    padding: 22px 18px 28px;
-    animation: up .28s cubic-bezier(.2, .9, .3, 1);
-  }
-  .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-  .sheet-head h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 18px; }
+  /* ---------- Impostazioni ---------- */
+  .overlay { position: fixed; inset: 0; z-index: 10; background: rgba(4, 3, 9, .8); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; animation: fade .2s; }
+  .sheet { width: 100%; max-width: 520px; max-height: 92dvh; overflow: auto; background: #110f1c; border: 1px solid var(--line); border-bottom: 0; border-radius: 30px 30px 0 0; padding: 12px 18px 28px; animation: up .3s cubic-bezier(.2, .9, .3, 1); }
+  .sheet::before { content: ""; display: block; width: 44px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.2); margin: 0 auto 14px; }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .sheet-head h2 { margin: 0; font-family: var(--neon); font-weight: 400; font-size: 26px; }
   .form-group { margin-bottom: 18px; }
-  .form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
-  .form-group small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 7px; line-height: 1.4; }
-  .form-group .field { background: var(--bg); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; }
+  .form-group > label:not(.toggle-row) { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+  .form-group small { display: block; color: var(--muted); font-size: 13px; margin-top: 8px; line-height: 1.45; }
+  .form-group .field { background: var(--bg); font-size: 15px; }
+  .form-group #apiKey, .form-group #model { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; }
+  .model-select { appearance: none; -webkit-appearance: none; padding-right: 40px; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 22px) 24px, calc(100% - 16px) 24px; background-size: 6px 6px; background-repeat: no-repeat; }
+  .form-group .toggle-row { background: var(--bg); }
   .key-row { display: flex; gap: 8px; }
   .key-row .field { flex: 1; min-width: 0; }
-  .key-row button { flex: none; padding: 0 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); font-size: 13px; color: var(--muted); }
-  .model-select { font-family: var(--body) !important; appearance: none; -webkit-appearance: none; padding-right: 40px;
-    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-    background-position: calc(100% - 22px) 23px, calc(100% - 16px) 23px; background-size: 6px 6px; background-repeat: no-repeat; }
-  .form-group .toggle-row { display: flex; margin-bottom: 0; font-size: 15px; background: var(--bg); }
-  .saved { color: var(--l1); font-size: 14px; text-align: center; margin: 12px 0 0; min-height: 20px; }
+  .key-row button { flex: none; padding: 0 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg); font-size: 13px; color: var(--muted); }
+  .saved { color: #3dffa2; font-size: 14px; text-align: center; margin: 12px 0 0; min-height: 20px; }
+  #versionInfo { text-align: center; }
 
-  /* ---------- Animations ---------- */
+  /* ---------- Animazioni ---------- */
+  @keyframes drift { to { transform: translate(-14vmax, 12vmax) scale(1.15); } }
+  @keyframes flicker { 0%, 91%, 93%, 95.5%, 100% { opacity: 1; } 92%, 94.5% { opacity: .45; } }
+  @keyframes shine { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+  @keyframes glow { 50% { box-shadow: 0 0 46px 0 var(--c), 0 0 34px -6px var(--c) inset; } }
   @keyframes spin { to { transform: rotate(360deg); } }
-  @keyframes pulse { 50% { transform: scale(.6); opacity: .6; } }
-  @keyframes pop { from { transform: scale(.85); opacity: 0; } }
-  @keyframes reveal { from { transform: translateY(18px) scale(.94); opacity: 0; } }
+  @keyframes pulse { 50% { transform: scale(.7); opacity: .6; } }
+  @keyframes pop { from { transform: scale(.6); opacity: 0; } }
+  @keyframes nameIn { from { transform: scale(.7) translateY(14px); opacity: 0; filter: blur(8px); } }
+  @keyframes flip { from { transform: rotateY(88deg) scale(.9); opacity: 0; } 60% { opacity: 1; } }
+  @keyframes shake { 20%, 60% { transform: rotate(-12deg); } 40%, 80% { transform: rotate(12deg); } }
   @keyframes fade { from { opacity: 0; } }
   @keyframes up { from { transform: translateY(100%); } }
+  @media (max-width: 350px) { .choice { height: 200px; } .choice b { font-size: 25px; } .logo { font-size: 26px; } }
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
-    .orb::before, .orb::after { animation-duration: 2s !important; }
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    .orb::before, .orb::after { animation-duration: 2s !important; animation-iteration-count: infinite !important; }
   }
 </style>
 </head>
 <body data-level="1">
+<div class="bg" aria-hidden="true"><i></i><i></i></div>
 <div class="app">
 
   <header>
-    <h1 class="logo"><span class="d">OBBLIGO</span> <span class="o">o</span><br><span class="t">VERITÀ</span></h1>
+    <h1 class="logo"><span class="tube d">Obbligo</span><span class="o">o</span><br><span class="tube t">Verità</span></h1>
     <button class="install-btn" id="installBtn" hidden>Installa</button>
     <button class="icon-btn" id="settingsBtn" aria-label="Impostazioni">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -390,9 +238,9 @@
   <!-- ================= SETUP ================= -->
   <main id="setup">
     <section class="section">
-      <p class="label">Giocatori</p>
+      <p class="label"><b>1</b>Chi gioca</p>
       <form class="add-row" id="addForm" autocomplete="off">
-        <input class="field" id="nameInput" type="text" maxlength="24" placeholder="Nome del giocatore" aria-label="Nome del giocatore" enterkeyhint="done">
+        <input class="field" id="nameInput" type="text" maxlength="24" placeholder="Nome" aria-label="Nome del giocatore" enterkeyhint="done">
         <div class="gender" role="radiogroup" aria-label="Genere">
           <button type="button" class="g-opt m" role="radio" data-g="M" aria-checked="true" aria-label="Maschio">♂</button>
           <button type="button" class="g-opt f" role="radio" data-g="F" aria-checked="false" aria-label="Femmina">♀</button>
@@ -404,31 +252,29 @@
     </section>
 
     <section class="section">
-      <p class="label">Livello</p>
+      <p class="label"><b>2</b>Quanto si osa</p>
       <div class="levels" role="radiogroup" aria-label="Livello">
-        <button class="level" role="radio" data-level="1" aria-checked="true"><span class="num">1</span><span class="name">Livello</span></button>
-        <button class="level" role="radio" data-level="2" aria-checked="false"><span class="num">2</span><span class="name">Livello</span></button>
-        <button class="level" role="radio" data-level="3" aria-checked="false"><span class="num">3</span><span class="name">Livello</span></button>
+        <button class="level" role="radio" data-level="1" aria-checked="true"><span class="num">1</span><span class="name" data-nome="1"></span><span class="heat"><i></i><i></i><i></i><i></i><i></i></span></button>
+        <button class="level" role="radio" data-level="2" aria-checked="false"><span class="num">2</span><span class="name" data-nome="2"></span><span class="heat"><i></i><i></i><i></i><i></i><i></i></span></button>
+        <button class="level" role="radio" data-level="3" aria-checked="false"><span class="num">3</span><span class="name" data-nome="3"></span><span class="heat"><i></i><i></i><i></i><i></i><i></i></span></button>
       </div>
+      <p class="hint" id="levelDesc"></p>
     </section>
 
     <section class="section">
-      <p class="label">Modalità</p>
+      <p class="label"><b>3</b>Opzioni</p>
       <div class="plan" role="radiogroup" aria-label="Modalità">
         <button type="button" class="plan-opt" role="radio" data-plan="gratis" aria-checked="false">Gratis</button>
         <button type="button" class="plan-opt" role="radio" data-plan="pagamento" aria-checked="true">A pagamento</button>
       </div>
-      <p class="hint" id="planHint" style="text-align:left"></p>
-    </section>
-
-    <section class="section">
-      <label class="toggle-row">
-        <span>Ordine dei turni casuale</span>
+      <p class="hint" id="planHint"></p>
+      <label class="toggle-row" style="margin-top:14px">
+        <span>Turni in ordine casuale</span>
         <span class="switch"><input type="checkbox" id="randomToggle"><span></span></span>
       </label>
     </section>
 
-    <button class="btn btn-primary" id="startBtn" disabled>Inizia</button>
+    <button class="btn btn-primary" id="startBtn" disabled>Si gioca</button>
     <p class="hint" id="setupHint"></p>
   </main>
 
@@ -445,8 +291,16 @@
     </div>
 
     <div class="choices" id="choices">
-      <button class="choice" data-type="Obbligo">Obbligo</button>
-      <button class="choice truth" data-type="Verità">Verità</button>
+      <button class="choice" data-type="Obbligo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5c.6 3.2 4.8 5.3 4.8 10.4a4.8 4.8 0 0 1-9.6 0c0-1.6.5-2.9 1.4-4 .1 1.9.9 3 2 3.3-.3-3.3.2-6.3 1.4-9.700z"/><path d="M12 21.500a2.3 2.3 0 0 0 2.3-2.300c0-1.5-1.3-2.2-2.3-3.7-1 1.5-2.3 2.2-2.3 3.700a2.3 2.3 0 0 0 2.3 2.300z"/></svg>
+        <b>Obbligo</b>
+        <small>una cosa da fare, adesso</small>
+      </button>
+      <button class="choice truth" data-type="Verità">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.500h16v10.500H10.500L5.5 20v-4H4z"/><path d="M9.8 9.200a2.2 2.2 0 1 1 3.3 1.900c-.7.4-1.1.800-1.1 1.5"/><path d="M12 14.300v.1"/></svg>
+        <b>Verità</b>
+        <small>una domanda, senza bugie</small>
+      </button>
     </div>
 
     <div class="loading" id="loading" hidden role="status" aria-live="polite">
@@ -458,6 +312,13 @@
       <article class="card" id="card" aria-live="polite">
         <p class="kind" id="cardKind">Obbligo</p>
         <p class="text" id="cardText"></p>
+        <div class="timer" id="timer" hidden>
+          <button type="button" class="timer-btn" id="timerBtn" aria-label="Avvia o ferma il tempo">
+            <svg viewBox="0 0 44 44" aria-hidden="true"><circle class="trk" cx="22" cy="22" r="19"/><circle class="prg" id="timerRing" cx="22" cy="22" r="19"/></svg>
+            <span id="timerNum">60</span>
+          </button>
+          <span id="timerLabel">Tocca per far partire il tempo</span>
+        </div>
       </article>
       <div class="actions">
         <button class="btn btn-ghost" id="againBtn">Un'altra</button>
@@ -490,7 +351,7 @@
           <input class="field" id="apiKey" type="password" placeholder="sk-or-v1-…" spellcheck="false" autocapitalize="off">
           <button type="button" id="toggleKey">Mostra</button>
         </div>
-        <small>Resta salvata solo su questo dispositivo (localStorage) e viene inviata soltanto a openrouter.ai.</small>
+        <small>Resta salvata solo su questo dispositivo e viene inviata soltanto a openrouter.ai.</small>
       </div>
       <div class="form-group">
         <label for="model" id="modelLabel">Modello</label>
@@ -498,14 +359,14 @@
           <option value="">Caricamento modelli disponibili…</option>
         </select>
         <input class="field" id="model" type="text" spellcheck="false" autocapitalize="off" aria-label="Nome del modello" style="margin-top:8px">
-        <small>Scegli dal menu un modello attivo sul tuo account, oppure scrivine il nome. Se il modello scelto viene ritirato, l'app ne sceglie da sola un altro disponibile.</small>
+        <small>Scegli dal menu un modello attivo sul tuo account, oppure scrivine il nome. Se il modello scelto non è disponibile, l'app ne sceglie da sola un altro.</small>
       </div>
       <div class="form-group" id="webGroup">
         <label class="toggle-row">
           <span>Cerca spunti sul web</span>
           <span class="switch"><input type="checkbox" id="webToggle"><span></span></span>
         </label>
-        <small>Attiva la ricerca web di OpenRouter (ha un piccolo costo extra per ogni sfida).</small>
+        <small>Attiva la ricerca web di OpenRouter (circa mezzo centesimo in più a sfida).</small>
       </div>
       <button class="btn btn-primary" type="submit">Salva</button>
       <p class="saved" id="savedMsg"></p>
@@ -526,7 +387,14 @@ const PROMPTS_LIVELLI = {
   3: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 3 – INTENSITÀ 80% – NUDI. VERITÀ: domande esplicite e dettagliate sulle fantasie più sporche e su cosa vorresti fare o farti fare adesso e da chi dei presenti. OBBLIGHI, azioni ammesse: nudità completa, masturbarsi davanti agli altri, masturbazione reciproca, stimolazione diretta dei genitali con mani, bocca e lingua, sesso orale, sex toys se disponibili, dominazione e sottomissione con ordini da eseguire, bendature e polsi legati, azioni a tre in cui due giocatori si dedicano insieme al terzo. LIMITI: niente penetrazione e niente rapporto completo (è il 100% e resta fuori dal gioco). INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi. DURATA: ogni obbligo ha una durata precisa, sempre scritta nella sfida, compresa tra 30 secondi e 1 minuto e 30 secondi: mai meno di 30 secondi, mai più di 1 minuto e 30. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video."
 };
 
-const VERSIONE = "11";
+const VERSIONE = "12";
+
+// Nome e descrizione mostrati per ogni livello
+const LIVELLI_INFO = {
+  1: { nome: "Vestiti",   desc: "Tutti vestiti · intensità 40%" },
+  2: { nome: "In intimo", desc: "Si resta in intimo · intensità 60%" },
+  3: { nome: "Nudi",      desc: "Senza niente addosso · intensità 80%" }
+};
 
 const CONFIG = {
   ENDPOINT: "https://openrouter.ai/api/v1/chat/completions",
@@ -736,7 +604,9 @@ function renderLevel() {
   document.querySelectorAll(".level").forEach((b) => {
     b.setAttribute("aria-checked", String(Number(b.dataset.level) === state.level));
   });
-  $("levelBadge").textContent = "Livello " + state.level;
+  $("levelBadge").textContent = state.level + " · " + LIVELLI_INFO[state.level].nome;
+  $("levelDesc").textContent = LIVELLI_INFO[state.level].desc;
+  document.querySelectorAll("[data-nome]").forEach((e) => { e.textContent = LIVELLI_INFO[e.dataset.nome].nome; });
 }
 document.querySelectorAll(".level").forEach((b) => {
   b.addEventListener("click", () => {
@@ -776,6 +646,8 @@ function showTurn() {
   if (state.turn >= state.players.length) state.turn = 0;
   const who = $("who");
   who.textContent = state.players[state.turn].name;
+  who.dataset.g = state.players[state.turn].g || "";
+  fermaTimer();
   who.style.animation = "none"; void who.offsetWidth; who.style.animation = "";
   showOnly("choices");
 }
@@ -793,7 +665,7 @@ function nextPlayer() {
 }
 
 document.querySelectorAll(".choice").forEach((b) => {
-  b.addEventListener("click", () => generaSfida(b.dataset.type));
+  b.addEventListener("click", () => { vibra(15); generaSfida(b.dataset.type); });
 });
 $("againBtn").addEventListener("click", () => generaSfida(state.currentType));
 $("retryBtn").addEventListener("click", () => generaSfida(state.currentType));
@@ -808,6 +680,7 @@ const FRASI_ATTESA = [
 ];
 let loadingTimer = null;
 function startLoading(type) {
+  fermaTimer();
   const color = type === "Obbligo" ? "var(--dare)" : "var(--truth)";
   $("orb").style.setProperty("--c", color);
   let i = 0;
@@ -831,6 +704,63 @@ function showError(title, msg) {
   $("errorMsg").textContent = msg;
   showOnly("error");
 }
+
+/* ---------- Vibrazione e conto alla rovescia degli obblighi ---------- */
+function vibra(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch {} }
+
+function durataDa(testo) {
+  const t = testo.toLowerCase();
+  let s = 0, m;
+  if (/(un|1)\s*minuto\s*e\s*mezzo/.test(t)) s = 90;
+  else if ((m = t.match(/(\d+|un)\s*minut[oi](?:\s*e\s*(\d+)\s*second[oi])?/))) s = (m[1] === "un" ? 1 : Number(m[1])) * 60 + Number(m[2] || 0);
+  else if ((m = t.match(/(\d+)\s*second[oi]/))) s = Number(m[1]);
+  return s >= 10 && s <= 180 ? s : 0;
+}
+
+const GIRO = 119.4;   // circonferenza dell'anello del timer
+let timerInt = null, timerDur = 0;
+function mostraTimer(sec, frazione) {
+  $("timerNum").textContent = Math.ceil(sec);
+  $("timerRing").style.strokeDashoffset = String(GIRO * (1 - frazione));
+}
+function fermaTimer() {
+  clearInterval(timerInt);
+  timerInt = null;
+  $("timer").classList.remove("on", "done");
+}
+function preparaTimer(type, testo) {
+  fermaTimer();
+  timerDur = type === "Obbligo" ? durataDa(testo) : 0;
+  $("timer").hidden = !timerDur;
+  if (!timerDur) return;
+  mostraTimer(timerDur, 1);
+  $("timerLabel").textContent = "Tocca per far partire il tempo";
+}
+$("timerBtn").addEventListener("click", () => {
+  if (timerInt) {             // secondo tocco: ferma e azzera
+    fermaTimer();
+    mostraTimer(timerDur, 1);
+    $("timerLabel").textContent = "Tocca per far partire il tempo";
+    return;
+  }
+  const fine = Date.now() + timerDur * 1000;
+  $("timer").classList.remove("done");
+  $("timer").classList.add("on");
+  $("timerLabel").textContent = "Tempo in corso… tocca per fermare";
+  vibra(20);
+  timerInt = setInterval(() => {
+    const resta = (fine - Date.now()) / 1000;
+    if (resta <= 0) {
+      fermaTimer();
+      mostraTimer(0, 0);
+      $("timer").classList.add("done");
+      $("timerLabel").textContent = "Tempo scaduto!";
+      vibra([250, 120, 250, 120, 450]);
+      return;
+    }
+    mostraTimer(resta, resta / timerDur);
+  }, 200);
+});
 
 /* ---------- Costruzione del prompt ---------- */
 function buildMessages(player, type) {
@@ -1025,6 +955,8 @@ async function generaSfida(type) {
     $("cardKind").textContent = type + " · " + player.name;
     $("cardText").textContent = testo;
     showOnly("result");
+    preparaTimer(type, testo);
+    vibra(type === "Obbligo" ? [30, 40, 30] : 30);
     card.style.animation = "none"; void card.offsetWidth; card.style.animation = "";
   } catch (err) {
     if (controller.signal.aborted) {

@@ -1,6 +1,6 @@
 // Service worker: rende l'app installabile e utilizzabile offline (solo la grafica:
 // le sfide richiedono comunque internet). Le chiamate a OpenRouter non vengono mai messe in cache.
-const CACHE_NAME = "obbligo-verita-v11";
+const CACHE_NAME = "obbligo-verita-v12";
 const ASSETS = [
   "./",
   "./index.html",

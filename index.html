@@ -526,7 +526,7 @@ const PROMPTS_LIVELLI = {
   3: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 3 – INTENSITÀ 80% – NUDI. VERITÀ: domande esplicite e dettagliate sulle fantasie più sporche e su cosa vorresti fare o farti fare adesso e da chi dei presenti. OBBLIGHI, azioni ammesse: nudità completa, masturbarsi davanti agli altri, masturbazione reciproca, stimolazione diretta dei genitali con mani, bocca e lingua, sesso orale, sex toys se disponibili, dominazione e sottomissione con ordini da eseguire, bendature e polsi legati, azioni a tre in cui due giocatori si dedicano insieme al terzo. LIMITI: niente penetrazione e niente rapporto completo (è il 100% e resta fuori dal gioco). INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi. DURATA: ogni obbligo ha una durata precisa, sempre scritta nella sfida, compresa tra 30 secondi e 1 minuto e 30 secondi: mai meno di 30 secondi, mai più di 1 minuto e 30. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video."
 };
 
-const VERSIONE = "9";
+const VERSIONE = "10";
 
 const CONFIG = {
   ENDPOINT: "https://openrouter.ai/api/v1/chat/completions",
@@ -536,7 +536,9 @@ const CONFIG = {
   MAX_STORICO: 15,        // quante sfide recenti ricordare e passare al modello
   TEMPERATURE: 1.0,
   MAX_TOKENS: 1500,
-  TIMEOUT_MS: 60000
+  TIMEOUT_MS: 180000,            // limite per tutta la catena di tentativi
+  TIMEOUT_MODELLO_GRATIS_MS: 25000, // attesa massima per un singolo modello gratuito
+  TIMEOUT_MODELLO_MS: 60000         // attesa massima per un singolo modello a pagamento
 };
 
 // Se il modello scelto non è disponibile, l'app ne sceglie uno tra quelli attivi,
@@ -907,10 +909,23 @@ async function generaSfida(type) {
     if (conWeb) {
       body.tools = [{ type: "openrouter:web_search", parameters: { max_results: CONFIG.WEB_MAX_RISULTATI } }];
     }
-    const r = await fetch(CONFIG.ENDPOINT, { method: "POST", headers, signal: controller.signal, body: JSON.stringify(body) });
-    let d = null;
-    try { d = await r.json(); } catch {}
-    return { res: r, data: d };
+    // Ogni modello ha il suo tempo massimo: se non risponde si passa oltre senza far scadere tutto
+    const c = new AbortController();
+    const annulla = () => c.abort();
+    controller.signal.addEventListener("abort", annulla);
+    const t = setTimeout(annulla, gratis() ? CONFIG.TIMEOUT_MODELLO_GRATIS_MS : CONFIG.TIMEOUT_MODELLO_MS);
+    try {
+      const r = await fetch(CONFIG.ENDPOINT, { method: "POST", headers, signal: c.signal, body: JSON.stringify(body) });
+      let d = null;
+      try { d = await r.json(); } catch {}
+      return { res: r, data: d };
+    } catch (e) {
+      if (controller.signal.aborted || !c.signal.aborted) throw e;
+      return { res: { ok: false, status: 408 }, data: { error: { code: 408, message: "nessuna risposta dal modello" } } };
+    } finally {
+      clearTimeout(t);
+      controller.signal.removeEventListener("abort", annulla);
+    }
   };
 
   const ok = (r) => r.res.ok && !(r.data && r.data.error);
@@ -944,7 +959,7 @@ async function generaSfida(type) {
     // Modello ritirato o non servito: scegline uno disponibile e riprova
     // (ritirato, non disponibile in questa regione; in modalità Gratis anche se è al limite o non risponde)
     const daCambiare = (x) => !ok(x) && (modelloNonDisponibile(x.res, x.data) ||
-      (gratis() && [429, 502, 503].includes(x.res.status))) ||
+      (gratis() && [408, 429, 502, 503].includes(x.res.status))) ||
       (gratis() && ok(x) && !estrai(x));
     const scartati = new Set();
     let tentativi = 0;
@@ -975,7 +990,7 @@ async function generaSfida(type) {
           : "Troppe richieste ravvicinate. Aspetta qualche secondo e riprova.",
         403: "Questo modello non è utilizzabile (bloccato nella tua zona o richiesta rifiutata). Scegline un altro nelle Impostazioni.",
         404: "Modello non trovato: controlla il nome nelle Impostazioni.",
-        408: "Il modello ha impiegato troppo tempo. Riprova.",
+        408: "Il modello non ha risposto in tempo (non dipende dalla tua connessione). Riprova o scegline un altro nelle Impostazioni.",
         502: "Il provider del modello non risponde. Riprova o cambia modello.",
         503: "Nessun provider disponibile per questo modello in questo momento."
       };
@@ -1002,7 +1017,8 @@ async function generaSfida(type) {
   } catch (err) {
     if (controller.signal.aborted) {
       if (controller.signal.reason === "timeout") {
-        showError("Tempo scaduto", "La risposta sta impiegando troppo. Controlla la connessione e riprova.");
+        showError("Nessuna risposta", "I modelli provati non hanno risposto in tempo: non dipende dalla tua connessione. " +
+          (gratis() ? "I modelli gratuiti sono spesso lenti o sovraccarichi: riprova, oppure passa a «A pagamento»." : "Riprova o scegli un altro modello nelle Impostazioni.") + " [v" + VERSIONE + "]");
       }
       return; // annullata dall'utente: nessun messaggio
     }

@@ -165,6 +165,15 @@
     box-shadow: 0 0 18px rgba(34, 227, 255, .45);
   }
   .add-btn:active { transform: scale(.94); }
+  .gender { display: flex; flex: none; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel); }
+  .g-opt { width: 40px; height: 50px; font-size: 20px; color: var(--muted); opacity: .5; transition: opacity .15s, background .15s, color .15s; }
+  .g-opt.m[aria-checked="true"] { opacity: 1; color: var(--truth); background: rgba(34, 227, 255, .14); text-shadow: 0 0 10px var(--truth); }
+  .g-opt.f[aria-checked="true"] { opacity: 1; color: var(--dare); background: rgba(255, 43, 214, .14); text-shadow: 0 0 10px var(--dare); }
+  .chip { padding-left: 8px !important; }
+  .chip .g { font-size: 15px; font-weight: 700; }
+  .chip .g.M { color: var(--truth); background: rgba(34, 227, 255, .14); }
+  .chip .g.F { color: var(--dare); background: rgba(255, 43, 214, .14); }
+  .chip .g.U { color: #08070f; background: var(--l2); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding: 0; list-style: none; }
   .chip {
     display: flex; align-items: center; gap: 6px;
@@ -381,6 +390,10 @@
       <p class="label">Giocatori</p>
       <form class="add-row" id="addForm" autocomplete="off">
         <input class="field" id="nameInput" type="text" maxlength="24" placeholder="Nome del giocatore" aria-label="Nome del giocatore" enterkeyhint="done">
+        <div class="gender" role="radiogroup" aria-label="Genere">
+          <button type="button" class="g-opt m" role="radio" data-g="M" aria-checked="true" aria-label="Maschio">♂</button>
+          <button type="button" class="g-opt f" role="radio" data-g="F" aria-checked="false" aria-label="Femmina">♀</button>
+        </div>
         <button class="add-btn" type="submit" aria-label="Aggiungi giocatore">+</button>
       </form>
       <ul class="chips" id="chips"></ul>
@@ -495,9 +508,9 @@
 
 // System Prompt per ogni livello: sostituisci i segnaposto con il tono che vuoi.
 const PROMPTS_LIVELLI = {
-  1: "Sei l'animatore di una serata privata tra adulti consenzienti che giocano a Obbligo o Verità. LIVELLO 1 – SEDUZIONE: si parte già maliziosi. Tono provocante, sfacciato e pieno di doppi sensi. Le Verità sono domande dirette su attrazione, baci, primi approcci, cotte, gelosie, cosa trovi sexy nei presenti e cosa ti accende. Gli Obblighi creano tensione fisica tra i giocatori: balli lenti e ravvicinati, sussurri all'orecchio, baci sul collo o sulle guance, massaggi, sguardi fissi a pochi centimetri, complimenti spinti detti guardando negli occhi. Sempre in casa, subito, in meno di 3 minuti.",
-  2: "Sei l'animatore di una serata privata tra adulti consenzienti che giocano a Obbligo o Verità. LIVELLO 2 – BOLLENTE: tono sensuale, audace e senza giri di parole. Le Verità sono domande esplicite su fantasie, esperienze passate, preferenze a letto, posti e situazioni più azzardate, desideri verso i presenti. Gli Obblighi sono sfide erotiche tra i giocatori: baci veri, carezze sul corpo, togliersi o far togliere un capo, giochi bendati, cubetti di ghiaccio, lap dance, posizioni ravvicinate a tempo, esplorare il corpo di un altro giocatore con le mani o con le labbra. Sempre in casa, subito, in meno di 5 minuti.",
-  3: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LIVELLO 3 – SENZA FRENI: è il livello hard, dichiaratamente sessuale. LINGUAGGIO: crudo, sporco ed esplicito. Chiama atti e parti del corpo con il loro nome volgare, usa il dirty talk, niente eufemismi, niente giri di parole, niente toni romantici. VERITÀ: le domande più spinte e dettagliate possibili su sesso, fantasie più sporche e proibite, pratiche preferite, cosa vorresti fare o farti fare adesso e da chi dei presenti, descritto nei particolari. OBBLIGHI: atti sessuali espliciti da compiere subito tra i giocatori presenti, nominati per nome: nudità completa, masturbazione propria o reciproca, sesso orale, stimolazione con mani, bocca e lingua, uso di sex toys se disponibili, giochi di dominazione e sottomissione con ordini da eseguire, bendature e polsi legati, azioni a tre in cui due giocatori si dedicano insieme al terzo. Indica sempre chi fa cosa a chi e per quanto tempo. Ogni sfida deve essere più spinta delle precedenti: non tornare mai a baci, massaggi o carezze soft. Uniche regole: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video."
+  1: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 1 – INTENSITÀ 40% – TUTTI VESTITI. VERITÀ: domande esplicite su attrazione, desideri, cosa ti eccita e cosa pensi dei presenti. OBBLIGHI, azioni ammesse: baci sulla bocca anche con la lingua, baci, leccate e morsi su collo e orecchie, strusciarsi addosso, lap dance da vestiti, mani su fianchi, cosce, sedere e petto sempre SOPRA i vestiti, mimare posizioni da vestiti, sussurrare all'orecchio cosa si vorrebbe fare. LIMITI: non si toglie nessun capo, niente mani sotto i vestiti, nessun contatto con i genitali nemmeno sopra i vestiti. INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi e per quanto tempo. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video.",
+  2: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 2 – INTENSITÀ 60% – IN INTIMO. VERITÀ: domande esplicite su esperienze, pratiche preferite, abitudini a letto e fantasie. OBBLIGHI, azioni ammesse: spogliarsi o farsi spogliare fino a restare in intimo (seno nudo ammesso), mani, bocca e lingua sulla pelle nuda: petto, capezzoli, pancia, schiena, interno coscia, sedere; toccare e strofinare i genitali solo SOPRA l'intimo; strusciarsi in intimo, lap dance in intimo, ghiaccio sul corpo, bendature. LIMITI: slip e boxer non si tolgono, niente mani dentro l'intimo, nessun contatto diretto con i genitali, niente sesso orale. INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi e per quanto tempo. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video.",
+  3: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 3 – INTENSITÀ 80% – NUDI. VERITÀ: domande esplicite e dettagliate sulle fantasie più sporche e su cosa vorresti fare o farti fare adesso e da chi dei presenti. OBBLIGHI, azioni ammesse: nudità completa, masturbarsi davanti agli altri, masturbazione reciproca, stimolazione diretta dei genitali con mani, bocca e lingua, sesso orale, sex toys se disponibili, dominazione e sottomissione con ordini da eseguire, bendature e polsi legati, azioni a tre in cui due giocatori si dedicano insieme al terzo. LIMITI: niente penetrazione e niente rapporto completo (è il 100% e resta fuori dal gioco). INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi e per quanto tempo. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video."
 };
 
 const CONFIG = {
@@ -525,7 +538,9 @@ const MODELLI_PREFERITI = [
 // Regole di formato aggiunte in coda al System Prompt di ogni livello.
 const REGOLE_OUTPUT =
   "Rispondi sempre in italiano. Restituisci SOLO il testo della sfida, rivolto direttamente al giocatore (dandogli del tu), " +
-  "in massimo 2 frasi. Niente introduzioni, niente spiegazioni, niente elenchi, niente virgolette, niente link, niente fonti o citazioni.";
+  "in massimo 2 frasi. Rispetta il genere indicato di ogni giocatore: accorda al maschile o al femminile aggettivi e participi, " +
+  "e proponi solo azioni coerenti con il corpo di chi le fa e di chi le riceve. " +
+  " Niente introduzioni, niente spiegazioni, niente elenchi, niente virgolette, niente link, niente fonti o citazioni.";
 
 /* =====================================================================
    STATO
@@ -600,6 +615,12 @@ function modelloNonDisponibile(res, data) {
     msg.includes("no longer available") || msg.includes("not a valid model") || msg.includes("no endpoints found");
 }
 if (!Array.isArray(state.players)) state.players = [];
+// Giocatori: { name, g } con g = "M" | "F" (null = da impostare, per i nomi salvati prima)
+state.players = state.players
+  .map((p) => typeof p === "string" ? { name: p, g: null } : p)
+  .filter((p) => p && p.name);
+let genereNuovo = "M";
+const descrivi = (p) => p.name + " (" + (p.g === "F" ? "donna" : "uomo") + ")";
 
 const $ = (id) => document.getElementById(id);
 
@@ -609,9 +630,20 @@ const $ = (id) => document.getElementById(id);
 function renderPlayers() {
   const ul = $("chips");
   ul.textContent = "";
-  state.players.forEach((name, i) => {
+  state.players.forEach((pl, i) => {
+    const name = pl.name;
     const li = document.createElement("li");
     li.className = "chip";
+    const gb = document.createElement("button");
+    gb.type = "button";
+    gb.className = "g " + (pl.g || "U");
+    gb.textContent = pl.g === "M" ? "♂" : pl.g === "F" ? "♀" : "?";
+    gb.setAttribute("aria-label", "Cambia genere di " + name);
+    gb.addEventListener("click", () => {
+      pl.g = pl.g === "M" ? "F" : "M";
+      store.set("oov_players", state.players);
+      renderPlayers();
+    });
     const span = document.createElement("span");
     span.textContent = name;
     const rm = document.createElement("button");
@@ -623,11 +655,13 @@ function renderPlayers() {
       store.set("oov_players", state.players);
       renderPlayers();
     });
-    li.append(span, rm);
+    li.append(gb, span, rm);
     ul.append(li);
   });
   $("emptyMsg").hidden = state.players.length >= 2;
-  $("startBtn").disabled = state.players.length < 2;
+  const senzaGenere = state.players.some((p) => !p.g);
+  $("startBtn").disabled = state.players.length < 2 || senzaGenere;
+  $("setupHint").textContent = senzaGenere ? "Tocca il «?» accanto al nome per impostare ♂ o ♀." : "";
 }
 
 $("addForm").addEventListener("submit", (e) => {
@@ -635,16 +669,23 @@ $("addForm").addEventListener("submit", (e) => {
   const input = $("nameInput");
   const name = input.value.trim().replace(/\s+/g, " ");
   if (!name) return;
-  if (state.players.some((p) => p.toLowerCase() === name.toLowerCase())) {
+  if (state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
     $("setupHint").textContent = "«" + name + "» è già in lista.";
     return;
   }
   $("setupHint").textContent = "";
-  state.players.push(name);
+  state.players.push({ name, g: genereNuovo });
   store.set("oov_players", state.players);
   input.value = "";
   input.focus();
   renderPlayers();
+});
+
+document.querySelectorAll(".g-opt").forEach((b) => {
+  b.addEventListener("click", () => {
+    genereNuovo = b.dataset.g;
+    document.querySelectorAll(".g-opt").forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+  });
 });
 
 function renderLevel() {
@@ -691,7 +732,7 @@ function showOnly(id) {
 function showTurn() {
   if (state.turn >= state.players.length) state.turn = 0;
   const who = $("who");
-  who.textContent = state.players[state.turn];
+  who.textContent = state.players[state.turn].name;
   who.style.animation = "none"; void who.offsetWidth; who.style.animation = "";
   showOnly("choices");
 }
@@ -750,7 +791,7 @@ function showError(title, msg) {
 
 /* ---------- Costruzione del prompt ---------- */
 function buildMessages(player, type) {
-  const altri = state.players.filter((p) => p !== player);
+  const altri = state.players.filter((p) => p !== player).map(descrivi);
   const storico = state.storico.length
     ? state.storico.map((s, i) => (i + 1) + ". [" + s.tipo + "] " + s.testo).join("\n")
     : "(nessuna, è la prima sfida della serata)";
@@ -762,11 +803,11 @@ function buildMessages(player, type) {
     : "una VERITÀ (una domanda personale a cui rispondere sinceramente)";
 
   const user =
-    "Giocatore di turno: " + player + "\n" +
+    "Giocatore di turno: " + descrivi(player) + "\n" +
     "Tipo scelto: " + type + "\n" +
     "Altri giocatori presenti: " + (altri.join(", ") || "nessuno") + "\n\n" +
     "Cerca sul web idee e spunti reali e originali per il gioco \"Obbligo o Verità\" coerenti con il tono indicato, " +
-    "poi scrivi " + richiesta + " per " + player + ". Puoi coinvolgere gli altri giocatori chiamandoli per nome.\n\n" +
+    "poi scrivi " + richiesta + " per " + player.name + ". Puoi coinvolgere gli altri giocatori chiamandoli per nome.\n\n" +
     "Sfide già uscite stasera — NON ripeterle e non proporre nulla di simile nel contenuto o nel meccanismo:\n" +
     storico + "\n\n" +
     "Rispondi solo con il testo della sfida.";
@@ -885,7 +926,7 @@ async function generaSfida(type) {
     if (state.controller !== controller) return;
     const card = $("card");
     card.classList.toggle("truth", type === "Verità");
-    $("cardKind").textContent = type + " · " + player;
+    $("cardKind").textContent = type + " · " + player.name;
     $("cardText").textContent = testo;
     showOnly("result");
     card.style.animation = "none"; void card.offsetWidth; card.style.animation = "";

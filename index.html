@@ -342,6 +342,7 @@
   .key-row { display: flex; gap: 8px; }
   .key-row .field { flex: 1; min-width: 0; }
   .key-row button { flex: none; padding: 0 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); font-size: 13px; color: var(--muted); }
+  .form-group .toggle-row { display: flex; margin-bottom: 0; font-size: 15px; background: var(--bg); }
   .saved { color: var(--l1); font-size: 14px; text-align: center; margin: 12px 0 0; min-height: 20px; }
 
   /* ---------- Animations ---------- */
@@ -466,7 +467,14 @@
       <div class="form-group">
         <label for="model">Modello</label>
         <input class="field" id="model" type="text" spellcheck="false" autocapitalize="off">
-        <small>Aggiungi <b>:online</b> al nome del modello per attivare la ricerca web.</small>
+        <small>Nome del modello su OpenRouter (es. nousresearch/hermes-4-70b). Il suffisso :online non serve più.</small>
+      </div>
+      <div class="form-group">
+        <label class="toggle-row">
+          <span>Cerca spunti sul web</span>
+          <span class="switch"><input type="checkbox" id="webToggle"><span></span></span>
+        </label>
+        <small>Attiva la ricerca web di OpenRouter (ha un piccolo costo extra per ogni sfida).</small>
       </div>
       <button class="btn btn-primary" type="submit">Salva</button>
       <p class="saved" id="savedMsg"></p>
@@ -488,7 +496,8 @@ const PROMPTS_LIVELLI = {
 
 const CONFIG = {
   ENDPOINT: "https://openrouter.ai/api/v1/chat/completions",
-  MODELLO_DEFAULT: "nousresearch/hermes-4-70b:online",
+  MODELLO_DEFAULT: "nousresearch/hermes-4-70b",
+  WEB_MAX_RISULTATI: 3,   // quanti risultati web passare al modello
   MAX_STORICO: 15,        // quante sfide recenti ricordare e passare al modello
   TEMPERATURE: 1.0,
   MAX_TOKENS: 500,
@@ -519,6 +528,7 @@ const state = {
   random: store.get("oov_random", false),
   apiKey: store.get("oov_apiKey", ""),
   model: store.get("oov_model", CONFIG.MODELLO_DEFAULT),
+  web: store.get("oov_web", true),
   turn: 0,
   currentType: null,
   storico: [],            // ultime sfide uscite (max CONFIG.MAX_STORICO)
@@ -526,8 +536,12 @@ const state = {
 };
 if (![1, 2, 3].includes(state.level)) state.level = 1;
 // Modelli ritirati da OpenRouter: passa in automatico al modello predefinito
-const MODELLI_RITIRATI = ["nousresearch/hermes-3-llama-3.1-70b", "nousresearch/hermes-3-llama-3.1-70b:online"];
-if (MODELLI_RITIRATI.includes(state.model)) { state.model = CONFIG.MODELLO_DEFAULT; store.set("oov_model", state.model); }
+// Il suffisso ":online" è stato ritirato da OpenRouter: la ricerca web ora è uno strumento separato
+function normalizzaModello(m) { return String(m || "").trim().replace(/:online$/i, "") || CONFIG.MODELLO_DEFAULT; }
+const MODELLI_RITIRATI = ["nousresearch/hermes-3-llama-3.1-70b"];
+state.model = normalizzaModello(state.model);
+if (MODELLI_RITIRATI.includes(state.model)) state.model = CONFIG.MODELLO_DEFAULT;
+store.set("oov_model", state.model);
 if (!Array.isArray(state.players)) state.players = [];
 
 const $ = (id) => document.getElementById(id);
@@ -745,22 +759,30 @@ async function generaSfida(type) {
   };
   if (location.protocol.startsWith("http")) headers["HTTP-Referer"] = location.origin;
 
-  try {
-    const res = await fetch(CONFIG.ENDPOINT, {
-      method: "POST",
-      headers,
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: state.model || CONFIG.MODELLO_DEFAULT,
-        messages: buildMessages(player, type),
-        temperature: CONFIG.TEMPERATURE,
-        max_tokens: CONFIG.MAX_TOKENS,
-        reasoning: { enabled: false }
-      })
-    });
+  const chiama = async (conWeb) => {
+    const body = {
+      model: normalizzaModello(state.model),
+      messages: buildMessages(player, type),
+      temperature: CONFIG.TEMPERATURE,
+      max_tokens: CONFIG.MAX_TOKENS
+    };
+    if (conWeb) {
+      body.tools = [{ type: "openrouter:web_search", parameters: { max_results: CONFIG.WEB_MAX_RISULTATI } }];
+    }
+    const r = await fetch(CONFIG.ENDPOINT, { method: "POST", headers, signal: controller.signal, body: JSON.stringify(body) });
+    let d = null;
+    try { d = await r.json(); } catch {}
+    return { res: r, data: d };
+  };
 
-    let data = null;
-    try { data = await res.json(); } catch {}
+  try {
+    let { res, data } = await chiama(state.web);
+
+    // Se il modello non supporta lo strumento di ricerca web, riprova senza
+    if (state.web && (res.status === 400 || res.status === 404 || (data && data.error && [400, 404].includes(data.error.code)))) {
+      const retry = await chiama(false);
+      if (retry.res.ok && !(retry.data && retry.data.error)) ({ res, data } = retry);
+    }
 
     if (!res.ok || (data && data.error)) {
       const apiMsg = data && data.error && (data.error.message || data.error.code) || "";
@@ -820,6 +842,7 @@ function openSettings() {
   $("apiKey").type = "password";
   $("toggleKey").textContent = "Mostra";
   $("model").value = state.model;
+  $("webToggle").checked = !!state.web;
   $("savedMsg").textContent = "";
   $("settings").hidden = false;
 }
@@ -840,7 +863,9 @@ $("toggleKey").addEventListener("click", () => {
 $("settingsForm").addEventListener("submit", (e) => {
   e.preventDefault();
   state.apiKey = $("apiKey").value.trim();
-  state.model = $("model").value.trim() || CONFIG.MODELLO_DEFAULT;
+  state.model = normalizzaModello($("model").value);
+  state.web = $("webToggle").checked;
+  store.set("oov_web", state.web);
   store.set("oov_apiKey", state.apiKey);
   store.set("oov_model", state.model);
   $("model").value = state.model;

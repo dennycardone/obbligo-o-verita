@@ -274,6 +274,16 @@
   @keyframes spark { to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
   @keyframes flash { 30% { transform: scale(1.18); box-shadow: 0 0 40px var(--accent); } }
   .sheet .plan { background: var(--bg); }
+  .model-rows { display: grid; gap: 8px; }
+  .model-row { --c: var(--l1); display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg); }
+  .model-row[data-l="2"] { --c: var(--l2); }
+  .model-row[data-l="3"] { --c: var(--l3); }
+  .model-row .lv { flex: none; width: 92px; font-weight: 700; font-size: 14px; color: var(--c); }
+  .model-row .mn { flex: 1; min-width: 0; font-size: 13.5px; line-height: 1.25; overflow-wrap: anywhere; }
+  .model-row .mn small { display: block; margin: 2px 0 0; font-size: 12px; }
+  .model-row button { flex: none; width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); display: grid; place-items: center; color: var(--muted); }
+  .model-row button:active { transform: rotate(180deg) scale(.9); }
+  .model-row button svg { width: 20px; height: 20px; }
   .timer-btn { box-shadow: 0 0 18px -2px var(--c), 0 0 14px -6px var(--c) inset; }
   .card .text.long { font-size: 17px; line-height: 1.34; }
   .chips { margin-right: -16px; padding-right: 16px; mask-image: linear-gradient(90deg, #000 86%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 86%, transparent); }
@@ -420,12 +430,10 @@
         <small>Resta salvata solo su questo dispositivo e viene inviata soltanto a openrouter.ai.</small>
       </div>
       <div class="form-group">
-        <label for="model" id="modelLabel">Modello</label>
-        <select class="field model-select" id="modelSelect" aria-label="Scegli un modello disponibile">
-          <option value="">Caricamento modelli disponibili…</option>
-        </select>
-        <input class="field" id="model" type="text" spellcheck="false" autocapitalize="off" aria-label="Nome del modello" style="margin-top:8px">
-        <small>Scegli dal menu un modello attivo sul tuo account, oppure scrivine il nome. Se il modello scelto non è disponibile, l'app ne sceglie da sola un altro.</small>
+        <label id="modelLabel">Modelli in uso</label>
+        <div class="model-rows" id="modelRows"></div>
+        <small>Ogni livello ha il suo modello, estratto a caso e tenuto finché funziona. Se un modello rifiuta il linguaggio di quel livello viene scartato da solo e ne viene estratto un altro. Il dado ne estrae subito uno nuovo.</small>
+        <button type="button" class="gear-link" id="resetModels" style="opacity:.8;padding-left:0"></button>
       </div>
       <div class="form-group" id="webGroup">
         <label class="toggle-row">
@@ -453,7 +461,7 @@ const PROMPTS_LIVELLI = {
   3: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 3 – INTENSITÀ 80% – NUDI. VERITÀ: domande esplicite e dettagliate sulle fantasie più sporche e su cosa vorresti fare o farti fare adesso e da chi dei presenti. OBBLIGHI, azioni ammesse: nudità completa, masturbarsi davanti agli altri, masturbazione reciproca, stimolazione diretta dei genitali con mani, bocca e lingua, sesso orale, sex toys se disponibili, dominazione e sottomissione con ordini da eseguire, bendature e polsi legati, azioni a tre in cui due giocatori si dedicano insieme al terzo. LIMITI: niente penetrazione e niente rapporto completo (è il 100% e resta fuori dal gioco). INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi. DURATA: ogni obbligo ha una durata precisa, sempre scritta nella sfida, compresa tra 30 secondi e 1 minuto e 30 secondi: mai meno di 30 secondi, mai più di 1 minuto e 30. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video."
 };
 
-const VERSIONE = "14";
+const VERSIONE = "15";
 
 // Nome e descrizione mostrati per ogni livello
 const LIVELLI_INFO = {
@@ -466,6 +474,7 @@ const CONFIG = {
   ENDPOINT: "https://openrouter.ai/api/v1/chat/completions",
   MODELS_ENDPOINT: "https://openrouter.ai/api/v1/models",
   MODELLO_DEFAULT: "nousresearch/hermes-4-70b",
+  PREZZO_MAX: 1.0,        // in modalità A pagamento: prezzo massimo del modello, in $ per milione di token
   WEB_MAX_RISULTATI: 3,   // quanti risultati web passare al modello
   MAX_STORICO: 15,        // quante sfide recenti ricordare e passare al modello
   TEMPERATURE: 1.0,
@@ -561,15 +570,31 @@ async function caricaModelli() {
   return lista.filter((m) => !bloccati.has(m.id));
 }
 
-function scegliModello(lista, escludi, soloGratis) {
-  const validi = lista
-    .filter((m) => !(escludi instanceof Set ? escludi.has(m.id) : m.id === escludi) && (soloGratis ? eGratis(m) : !eGratis(m)))
-    .sort((a, b) => b.created - a.created);
-  for (const re of MODELLI_PREFERITI) {
-    const trovati = validi.filter((m) => re.test(m.id)).sort((a, b) => b.created - a.created);
-    if (trovati.length) return trovati[0].id;
-  }
-  return validi.length ? validi[0].id : null;
+// ---- Un modello per ogni livello, estratto a caso e tenuto finché funziona ----
+// scelti:    modalità → livello → id del modello in uso
+// rifiutati: livello → modelli che non accettano il linguaggio di quel livello (scartati in automatico)
+state.scelti = store.get("oov_scelti", null) || { gratis: {}, pagamento: {} };
+const rifiutati = store.get("oov_rifiutati", null) || { 1: [], 2: [], 3: [] };
+[1, 2, 3].forEach((l) => { if (!Array.isArray(rifiutati[l])) rifiutati[l] = []; });
+
+function modelloDi(livello) { return (state.scelti[state.plan] || {})[livello] || ""; }
+function impostaModello(id, livello) {
+  if (!state.scelti[state.plan]) state.scelti[state.plan] = {};
+  state.scelti[state.plan][livello] = id;
+  store.set("oov_scelti", state.scelti);
+}
+function candidati(lista, livello, esclusi) {
+  const base = lista.filter((m) =>
+    (gratis() ? eGratis(m) : (!eGratis(m) && m.prezzo * 1e6 <= CONFIG.PREZZO_MAX)) &&
+    !rifiutati[livello].includes(m.id) && !(esclusi && esclusi.has(m.id)));
+  if (gratis()) return base;
+  // A pagamento: prima le famiglie poco censurate, poi tutte le altre entro il prezzo massimo
+  const preferiti = base.filter((m) => MODELLI_PREFERITI.some((re) => re.test(m.id)));
+  return preferiti.length ? preferiti : base;
+}
+function sorteggiaModello(lista, livello, esclusi) {
+  const c = candidati(lista, livello, esclusi);
+  return c.length ? c[Math.floor(Math.random() * c.length)].id : null;
 }
 
 function modelloNonDisponibile(res, data) {
@@ -654,19 +679,17 @@ document.querySelectorAll(".g-opt").forEach((b) => {
 function renderPlan() {
   document.querySelectorAll(".plan-opt").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.plan === state.plan)));
   $("planHint").textContent = gratis()
-    ? "Modello gratuito, senza ricerca web: costo zero, ma con un limite di richieste al giorno e sfide più censurate."
-    : "Modello a pagamento scelto nelle Impostazioni: pochi centesimi a serata.";
+    ? "Modelli gratuiti, senza ricerca web: costo zero, ma con un limite di richieste al giorno e più rifiuti ai livelli alti."
+    : "Modelli a pagamento poco censurati, entro " + CONFIG.PREZZO_MAX.toFixed(2) + " $ per milione di token: pochi centesimi a serata.";
 }
 document.querySelectorAll(".plan-opt").forEach((b) => {
   b.addEventListener("click", () => {
     state.plan = b.dataset.plan;
     store.set("oov_plan", state.plan);
     renderPlan();
-    $("model").value = gratis() ? state.modelFree : state.model;
-    $("modelLabel").textContent = gratis() ? "Modello gratuito" : "Modello a pagamento";
     $("webGroup").hidden = gratis();
     $("versionInfo").textContent = "Versione " + VERSIONE + " · " + (gratis() ? "Gratis" : "A pagamento");
-    riempiMenuModelli();
+    renderModelli();
   });
 });
 
@@ -1002,9 +1025,10 @@ async function generaSfida(type) {
   };
   if (location.protocol.startsWith("http")) headers["HTTP-Referer"] = location.origin;
 
+  const livello = state.level;   // il livello di questa sfida (resta fisso anche se lo cambi mentre carica)
   const chiama = async (conWeb) => {
     const body = {
-      model: gratis() ? state.modelFree : normalizzaModello(state.model),
+      model: modelloDi(livello),
       messages: buildMessages(player, type),
       temperature: CONFIG.TEMPERATURE,
       max_tokens: CONFIG.MAX_TOKENS
@@ -1043,13 +1067,6 @@ async function generaSfida(type) {
   };
 
   try {
-    if (gratis() && !state.modelFree) {
-      $("loadingText").textContent = "Cerco un modello gratuito…";
-      state.modelFree = scegliModello(await caricaModelli(), null, true) || "";
-      store.set("oov_modelFree", state.modelFree);
-      if (!state.modelFree) throw new Error("Non trovo modelli gratuiti disponibili in questo momento. Passa a «A pagamento» o riprova più tardi.");
-    }
-    // Testo della sfida; vuoto se il modello non ha scritto nulla o ha risposto con un rifiuto
     const RIFIUTO = /^(mi dispiace|mi spiace|non posso|non sono in grado|scusa|i'?m sorry|i am sorry|sorry|i can(no|')t|i won'?t|as an ai)/i;
     const estrai = (x) => {
       const c = x.data && x.data.choices && x.data.choices[0] && x.data.choices[0].message && x.data.choices[0].message.content;
@@ -1067,26 +1084,40 @@ async function generaSfida(type) {
       }
       return RIFIUTO.test(t) ? "" : t;
     };
-    let r = await prova();
-    if (ok(r) && !estrai(r)) r = await prova();   // risposta vuota: un secondo tentativo con lo stesso modello
+    const provati = new Set();
+    const maxTentativi = gratis() ? 12 : 6;
+    let r = null, testo = "", tentativi = 0;
 
-    // Modello ritirato o non servito: scegline uno disponibile e riprova
-    // (ritirato, non disponibile in questa regione; in modalità Gratis anche se è al limite o non risponde)
-    const daCambiare = (x) => !ok(x) && (modelloNonDisponibile(x.res, x.data) ||
-      (gratis() && [408, 429, 502, 503].includes(x.res.status))) ||
-      (gratis() && ok(x) && !estrai(x));
-    const scartati = new Set();
-    let tentativi = 0;
-    for (; tentativi < 12 && daCambiare(r); tentativi++) {
-      $("loadingText").textContent = "Cerco un modello disponibile… (" + (tentativi + 1) + ")";
-      const scartato = gratis() ? state.modelFree : normalizzaModello(state.model);
-      scartati.add(scartato);
-      if (modelloNonDisponibile(r.res, r.data)) { bloccati.add(scartato); store.set("oov_bloccati", [...bloccati]); }
-      const nuovo = scegliModello(await caricaModelli(), scartati, gratis());
-      if (!nuovo) break;
-      if (gratis()) { state.modelFree = nuovo; store.set("oov_modelFree", nuovo); }
-      else { state.model = nuovo; store.set("oov_model", nuovo); }
+    if (!modelloDi(livello)) {
+      $("loadingText").textContent = "Estraggo un modello per questo livello…";
+      const primo = sorteggiaModello(await caricaModelli(), livello, provati);
+      if (!primo) throw new Error("Non ci sono modelli disponibili per questo livello. Apri le Impostazioni e tocca «Rimetti in gioco i modelli scartati». [v" + VERSIONE + "]");
+      impostaModello(primo, livello);
+    }
+
+    for (;;) {
       r = await prova();
+      if (ok(r) && !estrai(r)) r = await prova();   // risposta vuota: un secondo tentativo con lo stesso modello
+      testo = ok(r) ? estrai(r) : "";
+      if (testo) break;
+
+      const id = modelloDi(livello);
+      const nonDisponibile = !ok(r) && modelloNonDisponibile(r.res, r.data);        // ritirato o bloccato nella regione
+      const rifiuta = !nonDisponibile && (ok(r) || r.res.status === 403);            // ha risposto senza una sfida valida
+      const nonRisponde = !ok(r) && [408, 429, 502, 503].includes(r.res.status);     // lento o sovraccarico
+      if (!nonDisponibile && !rifiuta && !nonRisponde) break;                        // altri errori (chiave, credito…): inutile cambiare
+
+      provati.add(id);
+      if (nonDisponibile) { bloccati.add(id); store.set("oov_bloccati", [...bloccati]); }
+      else if (rifiuta && !rifiutati[livello].includes(id)) {                        // scartato solo per QUESTO livello
+        rifiutati[livello].push(id);
+        store.set("oov_rifiutati", rifiutati);
+      }
+      if (++tentativi >= maxTentativi) break;
+      $("loadingText").textContent = "Cerco un modello adatto… (" + (tentativi + 1) + ")";
+      const nuovo = sorteggiaModello(await caricaModelli(), livello, provati);
+      if (!nuovo) break;
+      impostaModello(nuovo, livello);
     }
     const { res, data } = r;
 
@@ -1109,12 +1140,11 @@ async function generaSfida(type) {
         503: "Nessun provider disponibile per questo modello in questo momento."
       };
       throw new Error((noti[code] || "Errore " + code + ".") + (apiMsg ? " (" + apiMsg + ")" : "") +
-        (tentativi ? " — Provati " + (tentativi + 1) + " modelli, ultimo: " + (gratis() ? state.modelFree : state.model) + "." : "") + " [v" + VERSIONE + "]");
+        (tentativi ? " — Provati " + (tentativi + 1) + " modelli, ultimo: " + modelloDi(livello) + "." : "") + " [v" + VERSIONE + "]");
     }
 
-    const testo = estrai(r);
-    if (!testo) throw new Error("Il modello non ha scritto una sfida valida (ha rifiutato il contenuto o ha risposto in modo confuso). " +
-      (gratis() ? "I modelli gratuiti provati non ce l'hanno fatta: riprova, abbassa il livello o passa a «A pagamento»." : "Riprova o scegli un altro modello nelle Impostazioni.") +
+    if (!testo) throw new Error("Nessuno dei modelli provati ha scritto una sfida valida per questo livello: li ho scartati. " +
+      (gratis() ? "Riprova, abbassa il livello o passa a «A pagamento»." : "Riprova: ne verrà estratto un altro.") +
       " [v" + VERSIONE + (tentativi ? ", " + (tentativi + 1) + " modelli" : "") + "]");
 
     // Memoria anti-ripetizione: tieni solo le ultime N sfide
@@ -1161,47 +1191,59 @@ function openSettings() {
   $("apiKey").value = state.apiKey;
   $("apiKey").type = "password";
   $("toggleKey").textContent = "Mostra";
-  $("model").value = gratis() ? state.modelFree : state.model;
-  $("modelLabel").textContent = gratis() ? "Modello gratuito" : "Modello a pagamento";
   $("webGroup").hidden = gratis();
   $("webToggle").checked = !!state.web;
-  riempiMenuModelli();
+  renderModelli();
   $("savedMsg").textContent = "";
   $("versionInfo").textContent = "Versione " + VERSIONE + " · " + (gratis() ? "Gratis" : "A pagamento");
   $("settings").hidden = false;
 }
 function closeSettings() { $("settings").hidden = true; }
 
-async function riempiMenuModelli() {
-  const sel = $("modelSelect");
-  const lista = (await caricaModelli()).filter((m) => gratis() ? eGratis(m) : !eGratis(m));
-  sel.textContent = "";
-  const opt = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; return o; };
-  if (!lista.length) {
-    sel.append(opt("", state.apiKey ? "Elenco non disponibile: scrivi il nome qui sotto" : "Inserisci prima l'API Key e salva"));
-    return;
-  }
-  let attuale = String($("model").value || "").trim();
-  if (!attuale && gratis()) {
-    attuale = scegliModello(lista, null, true) || "";
-    $("model").value = attuale;
-  }
-  sel.append(opt("", "Scegli un modello…"));
-  const prezzo = (m) => m.prezzo ? " · $" + (m.prezzo * 1e6).toFixed(2) + "/M" : " · gratis";
-  const consigliati = lista.filter((m) => MODELLI_PREFERITI.some((re) => re.test(m.id))).sort((a, b) => b.created - a.created);
-  const altri = lista.filter((m) => !consigliati.includes(m)).sort((a, b) => a.name.localeCompare(b.name));
-  [["Consigliati", consigliati], ["Tutti i modelli", altri]].forEach(([nome, gruppo]) => {
-    if (!gruppo.length) return;
-    const g = document.createElement("optgroup");
-    g.label = nome;
-    gruppo.forEach((m) => g.append(opt(m.id, m.name + prezzo(m))));
-    sel.append(g);
+const DADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 9v.1M15 9v.1M12 12v.1M9 15v.1M15 15v.1"/></svg>';
+async function renderModelli() {
+  const box = $("modelRows");
+  const lista = await caricaModelli();
+  box.textContent = "";
+  [1, 2, 3].forEach((l) => {
+    const id = modelloDi(l);
+    const m = lista.find((x) => x.id === id);
+    const riga = document.createElement("div");
+    riga.className = "model-row";
+    riga.dataset.l = l;
+    const lv = document.createElement("span");
+    lv.className = "lv";
+    lv.textContent = LIVELLI_INFO[l].nome;
+    const mn = document.createElement("span");
+    mn.className = "mn";
+    mn.textContent = id ? (m ? m.name : id) : "Da estrarre alla prima sfida";
+    const info = document.createElement("small");
+    info.textContent = (m && m.prezzo ? "$" + (m.prezzo * 1e6).toFixed(2) + "/M · " : "") + candidati(lista, l).length + " in gara, " + rifiutati[l].length + " scartati";
+    mn.append(info);
+    const dado = document.createElement("button");
+    dado.type = "button";
+    dado.innerHTML = DADO;
+    dado.setAttribute("aria-label", "Estrai un altro modello per " + LIVELLI_INFO[l].nome);
+    dado.addEventListener("click", () => {
+      const nuovo = sorteggiaModello(lista, l, new Set([id]));
+      if (nuovo) { impostaModello(nuovo, l); vibra(15); renderModelli(); }
+    });
+    riga.append(lv, mn, dado);
+    box.append(riga);
   });
-  if (lista.some((m) => m.id === attuale)) sel.value = attuale;
+  const n = rifiutati[1].length + rifiutati[2].length + rifiutati[3].length + bloccati.size;
+  $("resetModels").textContent = "Rimetti in gioco i modelli scartati (" + n + ")";
+  $("resetModels").hidden = !n;
 }
+$("resetModels").addEventListener("click", () => {
+  [1, 2, 3].forEach((l) => { rifiutati[l] = []; });
+  bloccati.clear();
+  store.set("oov_rifiutati", rifiutati);
+  store.set("oov_bloccati", []);
+  renderModelli();
+});
 
 $("settingsBtn").addEventListener("click", openSettings);
-$("modelSelect").addEventListener("change", (e) => { if (e.target.value) $("model").value = e.target.value; });
 $("closeSettings").addEventListener("click", closeSettings);
 $("settings").addEventListener("click", (e) => { if (e.target === $("settings")) closeSettings(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSettings(); });
@@ -1215,13 +1257,11 @@ $("toggleKey").addEventListener("click", () => {
 
 $("settingsForm").addEventListener("submit", (e) => {
   e.preventDefault();
+  if ($("apiKey").value.trim() !== state.apiKey) cacheModelli = null;   // chiave cambiata: ricarica l'elenco
   state.apiKey = $("apiKey").value.trim();
-  if (gratis()) { state.modelFree = $("model").value.trim(); store.set("oov_modelFree", state.modelFree); }
-  else state.model = normalizzaModello($("model").value);
   state.web = $("webToggle").checked;
   store.set("oov_web", state.web);
   store.set("oov_apiKey", state.apiKey);
-  store.set("oov_model", state.model);
   $("savedMsg").textContent = "✓ Salvato";
   setTimeout(closeSettings, 700);
 });

@@ -509,6 +509,7 @@
       </div>
       <button class="btn btn-primary" type="submit">Salva</button>
       <p class="saved" id="savedMsg"></p>
+      <p class="hint" id="versionInfo"></p>
     </form>
   </div>
 </div>
@@ -524,6 +525,8 @@ const PROMPTS_LIVELLI = {
   2: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 2 – INTENSITÀ 60% – IN INTIMO. VERITÀ: domande esplicite su esperienze, pratiche preferite, abitudini a letto e fantasie. OBBLIGHI, azioni ammesse: spogliarsi o farsi spogliare fino a restare in intimo (seno nudo ammesso), mani, bocca e lingua sulla pelle nuda: petto, capezzoli, pancia, schiena, interno coscia, sedere; toccare e strofinare i genitali solo SOPRA l'intimo; strusciarsi in intimo, lap dance in intimo, ghiaccio sul corpo, bendature. LIMITI: slip e boxer non si tolgono, niente mani dentro l'intimo, nessun contatto diretto con i genitali, niente sesso orale. INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi. DURATA: ogni obbligo ha una durata precisa, sempre scritta nella sfida, compresa tra 30 secondi e 1 minuto e 30 secondi: mai meno di 30 secondi, mai più di 1 minuto e 30. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video.",
   3: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 3 – INTENSITÀ 80% – NUDI. VERITÀ: domande esplicite e dettagliate sulle fantasie più sporche e su cosa vorresti fare o farti fare adesso e da chi dei presenti. OBBLIGHI, azioni ammesse: nudità completa, masturbarsi davanti agli altri, masturbazione reciproca, stimolazione diretta dei genitali con mani, bocca e lingua, sesso orale, sex toys se disponibili, dominazione e sottomissione con ordini da eseguire, bendature e polsi legati, azioni a tre in cui due giocatori si dedicano insieme al terzo. LIMITI: niente penetrazione e niente rapporto completo (è il 100% e resta fuori dal gioco). INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi. DURATA: ogni obbligo ha una durata precisa, sempre scritta nella sfida, compresa tra 30 secondi e 1 minuto e 30 secondi: mai meno di 30 secondi, mai più di 1 minuto e 30. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video."
 };
+
+const VERSIONE = "8";
 
 const CONFIG = {
   ENDPOINT: "https://openrouter.ai/api/v1/chat/completions",
@@ -594,9 +597,12 @@ if (state.plan !== "gratis") state.plan = "pagamento";
 const gratis = () => state.plan === "gratis";
 const eGratis = (m) => m.id.endsWith(":free") || m.prezzo === 0;
 
+// Modelli risultati inutilizzabili su questo account (ritirati o bloccati nella regione): non riproporli
+const bloccati = new Set(store.get("oov_bloccati", []));
+
 let cacheModelli = null;
 async function caricaModelli() {
-  if (cacheModelli) return cacheModelli;
+  if (cacheModelli) return cacheModelli.filter((m) => !bloccati.has(m.id));
   const leggi = async (url, auth) => {
     const h = auth && state.apiKey ? { Authorization: "Bearer " + state.apiKey } : {};
     const r = await fetch(url, { headers: h });
@@ -615,7 +621,7 @@ async function caricaModelli() {
     })
     .map((m) => ({ id: m.id, name: m.name || m.id, created: m.created || 0, prezzo: Number(m.pricing && m.pricing.prompt) || 0 }));
   if (lista.length) cacheModelli = lista;
-  return lista;
+  return lista.filter((m) => !bloccati.has(m.id));
 }
 
 function scegliModello(lista, escludi, soloGratis) {
@@ -932,9 +938,12 @@ async function generaSfida(type) {
     const daCambiare = (x) => !ok(x) && (modelloNonDisponibile(x.res, x.data) ||
       (gratis() && [429, 502, 503].includes(x.res.status)));
     const scartati = new Set();
-    for (let tentativi = 0; tentativi < 5 && daCambiare(r); tentativi++) {
-      $("loadingText").textContent = "Cerco un modello disponibile…";
-      scartati.add(gratis() ? state.modelFree : normalizzaModello(state.model));
+    let tentativi = 0;
+    for (; tentativi < 12 && daCambiare(r); tentativi++) {
+      $("loadingText").textContent = "Cerco un modello disponibile… (" + (tentativi + 1) + ")";
+      const scartato = gratis() ? state.modelFree : normalizzaModello(state.model);
+      scartati.add(scartato);
+      if (modelloNonDisponibile(r.res, r.data)) { bloccati.add(scartato); store.set("oov_bloccati", [...bloccati]); }
       const nuovo = scegliModello(await caricaModelli(), scartati, gratis());
       if (!nuovo) break;
       if (gratis()) { state.modelFree = nuovo; store.set("oov_modelFree", nuovo); }
@@ -961,7 +970,8 @@ async function generaSfida(type) {
         502: "Il provider del modello non risponde. Riprova o cambia modello.",
         503: "Nessun provider disponibile per questo modello in questo momento."
       };
-      throw new Error((noti[code] || "Errore " + code + ".") + (apiMsg ? " (" + apiMsg + ")" : ""));
+      throw new Error((noti[code] || "Errore " + code + ".") + (apiMsg ? " (" + apiMsg + ")" : "") +
+        (tentativi ? " — Provati " + (tentativi + 1) + " modelli, ultimo: " + (gratis() ? state.modelFree : state.model) + "." : "") + " [v" + VERSIONE + "]");
     }
 
     const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
@@ -1010,6 +1020,7 @@ function openSettings() {
   $("webToggle").checked = !!state.web;
   riempiMenuModelli();
   $("savedMsg").textContent = "";
+  $("versionInfo").textContent = "Versione " + VERSIONE + " · " + (gratis() ? "Gratis" : "A pagamento");
   $("settings").hidden = false;
 }
 function closeSettings() { $("settings").hidden = true; }

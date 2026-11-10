@@ -1,6 +1,6 @@
 // Service worker: rende l'app installabile e utilizzabile offline (solo la grafica:
 // le sfide richiedono comunque internet). Le chiamate a OpenRouter non vengono mai messe in cache.
-const CACHE_NAME = "obbligo-verita-v7";
+const CACHE_NAME = "obbligo-verita-v8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -31,7 +31,7 @@ self.addEventListener("fetch", (event) => {
 
   // Rete prima (così vedi sempre l'ultima versione), cache se sei offline
   event.respondWith(
-    fetch(req)
+    fetch(req, { cache: "no-store" })
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));

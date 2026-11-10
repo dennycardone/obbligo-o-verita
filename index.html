@@ -274,8 +274,11 @@
   @keyframes spark { to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
   @keyframes flash { 30% { transform: scale(1.18); box-shadow: 0 0 40px var(--accent); } }
   .sheet .plan { background: var(--bg); }
+  .model-tag { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0 0; font-size: 11px; color: var(--muted); opacity: .6; min-height: 24px; }
+  .model-tag span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .model-tag button { flex: none; font-size: 11px; color: var(--muted); text-decoration: underline; padding: 6px 4px; }
   .model-rows { display: grid; gap: 8px; }
-  .model-row { --c: var(--l1); display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg); }
+  .model-row { --c: var(--l1); display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg); }
   .model-row[data-l="2"] { --c: var(--l2); }
   .model-row[data-l="3"] { --c: var(--l3); }
   .model-row .lv { flex: none; width: 92px; font-weight: 700; font-size: 14px; color: var(--c); }
@@ -392,6 +395,7 @@
         <button class="btn btn-ghost" id="againBtn">Un'altra</button>
         <button class="btn btn-primary" id="nextBtn">Prossimo</button>
       </div>
+      <p class="model-tag"><span id="modelName"></span><button type="button" id="dropModel">scarta</button></p>
     </div>
 
     <div class="error" id="error" hidden role="alert">
@@ -430,9 +434,9 @@
         <small>Resta salvata solo su questo dispositivo e viene inviata soltanto a openrouter.ai.</small>
       </div>
       <div class="form-group">
-        <label id="modelLabel">Modelli in uso</label>
+        <label id="modelLabel">Modelli</label>
         <div class="model-rows" id="modelRows"></div>
-        <small>Ogni livello ha il suo modello, estratto a caso e tenuto finché funziona. Se un modello rifiuta il linguaggio di quel livello viene scartato da solo e ne viene estratto un altro. Il dado ne estrae subito uno nuovo.</small>
+        <small>A ogni sfida viene estratto a caso un modello tra quelli in gara per quel livello. Chi rifiuta il linguaggio del livello viene scartato da solo; puoi scartarne uno anche a mano con «scarta», sotto la sfida.</small>
         <button type="button" class="gear-link" id="resetModels" style="opacity:.8;padding-left:0"></button>
       </div>
       <div class="form-group" id="webGroup">
@@ -461,7 +465,7 @@ const PROMPTS_LIVELLI = {
   3: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 3 – INTENSITÀ 80% – NUDI. VERITÀ: domande esplicite e dettagliate sulle fantasie più sporche e su cosa vorresti fare o farti fare adesso e da chi dei presenti. OBBLIGHI, azioni ammesse: nudità completa, masturbarsi davanti agli altri, masturbazione reciproca, stimolazione diretta dei genitali con mani, bocca e lingua, sesso orale, sex toys se disponibili, dominazione e sottomissione con ordini da eseguire, bendature e polsi legati, azioni a tre in cui due giocatori si dedicano insieme al terzo. LIMITI: niente penetrazione e niente rapporto completo (è il 100% e resta fuori dal gioco). INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi. DURATA: ogni obbligo ha una durata precisa, sempre scritta nella sfida, compresa tra 30 secondi e 1 minuto e 30 secondi: mai meno di 30 secondi, mai più di 1 minuto e 30. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video."
 };
 
-const VERSIONE = "15";
+const VERSIONE = "16";
 
 // Nome e descrizione mostrati per ogni livello
 const LIVELLI_INFO = {
@@ -570,18 +574,14 @@ async function caricaModelli() {
   return lista.filter((m) => !bloccati.has(m.id));
 }
 
-// ---- Un modello per ogni livello, estratto a caso e tenuto finché funziona ----
-// scelti:    modalità → livello → id del modello in uso
-// rifiutati: livello → modelli che non accettano il linguaggio di quel livello (scartati in automatico)
-state.scelti = store.get("oov_scelti", null) || { gratis: {}, pagamento: {} };
+// ---- A ogni sfida un modello diverso, estratto a caso tra quelli adatti al livello ----
+// rifiutati: livello → modelli scartati per quel livello (in automatico se rifiutano, o a mano dalla carta)
 const rifiutati = store.get("oov_rifiutati", null) || { 1: [], 2: [], 3: [] };
 [1, 2, 3].forEach((l) => { if (!Array.isArray(rifiutati[l])) rifiutati[l] = []; });
-
-function modelloDi(livello) { return (state.scelti[state.plan] || {})[livello] || ""; }
-function impostaModello(id, livello) {
-  if (!state.scelti[state.plan]) state.scelti[state.plan] = {};
-  state.scelti[state.plan][livello] = id;
-  store.set("oov_scelti", state.scelti);
+function scarta(id, livello) {
+  if (!id || rifiutati[livello].includes(id)) return;
+  rifiutati[livello].push(id);
+  store.set("oov_rifiutati", rifiutati);
 }
 function candidati(lista, livello, esclusi) {
   const base = lista.filter((m) =>
@@ -1026,9 +1026,10 @@ async function generaSfida(type) {
   if (location.protocol.startsWith("http")) headers["HTTP-Referer"] = location.origin;
 
   const livello = state.level;   // il livello di questa sfida (resta fisso anche se lo cambi mentre carica)
+  let modello = "";              // il modello estratto per questa sfida
   const chiama = async (conWeb) => {
     const body = {
-      model: modelloDi(livello),
+      model: modello,
       messages: buildMessages(player, type),
       temperature: CONFIG.TEMPERATURE,
       max_tokens: CONFIG.MAX_TOKENS
@@ -1088,11 +1089,13 @@ async function generaSfida(type) {
     const maxTentativi = gratis() ? 12 : 6;
     let r = null, testo = "", tentativi = 0;
 
-    if (!modelloDi(livello)) {
-      $("loadingText").textContent = "Estraggo un modello per questo livello…";
-      const primo = sorteggiaModello(await caricaModelli(), livello, provati);
-      if (!primo) throw new Error("Non ci sono modelli disponibili per questo livello. Apri le Impostazioni e tocca «Rimetti in gioco i modelli scartati». [v" + VERSIONE + "]");
-      impostaModello(primo, livello);
+    {
+      const lista = await caricaModelli();
+      if (!lista.length) throw new Error("Non riesco a scaricare l'elenco dei modelli da OpenRouter. Riprova tra poco. [v" + VERSIONE + "]");
+      // Evita, se possibile, lo stesso modello della sfida precedente
+      const evita = new Set(candidati(lista, livello).length > 1 && state.ultimoModello ? [state.ultimoModello] : []);
+      modello = sorteggiaModello(lista, livello, evita);
+      if (!modello) throw new Error("Non ci sono più modelli in gara per questo livello. Apri le Impostazioni e tocca «Rimetti in gioco i modelli scartati». [v" + VERSIONE + "]");
     }
 
     for (;;) {
@@ -1101,7 +1104,7 @@ async function generaSfida(type) {
       testo = ok(r) ? estrai(r) : "";
       if (testo) break;
 
-      const id = modelloDi(livello);
+      const id = modello;
       const nonDisponibile = !ok(r) && modelloNonDisponibile(r.res, r.data);        // ritirato o bloccato nella regione
       const rifiuta = !nonDisponibile && (ok(r) || r.res.status === 403);            // ha risposto senza una sfida valida
       const nonRisponde = !ok(r) && [408, 429, 502, 503].includes(r.res.status);     // lento o sovraccarico
@@ -1109,15 +1112,12 @@ async function generaSfida(type) {
 
       provati.add(id);
       if (nonDisponibile) { bloccati.add(id); store.set("oov_bloccati", [...bloccati]); }
-      else if (rifiuta && !rifiutati[livello].includes(id)) {                        // scartato solo per QUESTO livello
-        rifiutati[livello].push(id);
-        store.set("oov_rifiutati", rifiutati);
-      }
+      else if (rifiuta) scarta(id, livello);                                         // scartato solo per QUESTO livello
       if (++tentativi >= maxTentativi) break;
       $("loadingText").textContent = "Cerco un modello adatto… (" + (tentativi + 1) + ")";
       const nuovo = sorteggiaModello(await caricaModelli(), livello, provati);
       if (!nuovo) break;
-      impostaModello(nuovo, livello);
+      modello = nuovo;
     }
     const { res, data } = r;
 
@@ -1140,7 +1140,7 @@ async function generaSfida(type) {
         503: "Nessun provider disponibile per questo modello in questo momento."
       };
       throw new Error((noti[code] || "Errore " + code + ".") + (apiMsg ? " (" + apiMsg + ")" : "") +
-        (tentativi ? " — Provati " + (tentativi + 1) + " modelli, ultimo: " + modelloDi(livello) + "." : "") + " [v" + VERSIONE + "]");
+        (tentativi ? " — Provati " + (tentativi + 1) + " modelli, ultimo: " + modello + "." : "") + " [v" + VERSIONE + "]");
     }
 
     if (!testo) throw new Error("Nessuno dei modelli provati ha scritto una sfida valida per questo livello: li ho scartati. " +
@@ -1160,6 +1160,11 @@ async function generaSfida(type) {
     $("cardText").scrollTop = 0;
     showOnly("result");
     preparaTimer(type, testo);
+    state.ultimoModello = modello;
+    state.ultimoLivello = livello;
+    const info = (cacheModelli || []).find((m) => m.id === modello);
+    $("modelName").textContent = info ? info.name : modello;
+    $("dropModel").hidden = false;
     scintille(type);
     state.giri = (state.giri || 0) + 1;
     $("roundInfo").textContent = "#" + state.giri;
@@ -1200,14 +1205,11 @@ function openSettings() {
 }
 function closeSettings() { $("settings").hidden = true; }
 
-const DADO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 9v.1M15 9v.1M12 12v.1M9 15v.1M15 15v.1"/></svg>';
 async function renderModelli() {
   const box = $("modelRows");
   const lista = await caricaModelli();
   box.textContent = "";
   [1, 2, 3].forEach((l) => {
-    const id = modelloDi(l);
-    const m = lista.find((x) => x.id === id);
     const riga = document.createElement("div");
     riga.className = "model-row";
     riga.dataset.l = l;
@@ -1216,25 +1218,24 @@ async function renderModelli() {
     lv.textContent = LIVELLI_INFO[l].nome;
     const mn = document.createElement("span");
     mn.className = "mn";
-    mn.textContent = id ? (m ? m.name : id) : "Da estrarre alla prima sfida";
+    mn.textContent = candidati(lista, l).length + " modelli in gara";
     const info = document.createElement("small");
-    info.textContent = (m && m.prezzo ? "$" + (m.prezzo * 1e6).toFixed(2) + "/M · " : "") + candidati(lista, l).length + " in gara, " + rifiutati[l].length + " scartati";
+    info.textContent = rifiutati[l].length + " scartati";
     mn.append(info);
-    const dado = document.createElement("button");
-    dado.type = "button";
-    dado.innerHTML = DADO;
-    dado.setAttribute("aria-label", "Estrai un altro modello per " + LIVELLI_INFO[l].nome);
-    dado.addEventListener("click", () => {
-      const nuovo = sorteggiaModello(lista, l, new Set([id]));
-      if (nuovo) { impostaModello(nuovo, l); vibra(15); renderModelli(); }
-    });
-    riga.append(lv, mn, dado);
+    riga.append(lv, mn);
     box.append(riga);
   });
   const n = rifiutati[1].length + rifiutati[2].length + rifiutati[3].length + bloccati.size;
   $("resetModels").textContent = "Rimetti in gioco i modelli scartati (" + n + ")";
   $("resetModels").hidden = !n;
 }
+$("dropModel").addEventListener("click", () => {
+  if (!state.ultimoModello) return;
+  scarta(state.ultimoModello, state.ultimoLivello);
+  $("modelName").textContent = "Modello scartato per " + LIVELLI_INFO[state.ultimoLivello].nome;
+  $("dropModel").hidden = true;
+  vibra(15);
+});
 $("resetModels").addEventListener("click", () => {
   [1, 2, 3].forEach((l) => { rifiutati[l] = []; });
   bloccati.clear();

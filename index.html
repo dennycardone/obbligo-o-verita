@@ -488,10 +488,10 @@ const PROMPTS_LIVELLI = {
 
 const CONFIG = {
   ENDPOINT: "https://openrouter.ai/api/v1/chat/completions",
-  MODELLO_DEFAULT: "nousresearch/hermes-3-llama-3.1-70b:online",
+  MODELLO_DEFAULT: "nousresearch/hermes-4-70b:online",
   MAX_STORICO: 15,        // quante sfide recenti ricordare e passare al modello
   TEMPERATURE: 1.0,
-  MAX_TOKENS: 300,
+  MAX_TOKENS: 500,
   TIMEOUT_MS: 60000
 };
 
@@ -525,6 +525,9 @@ const state = {
   controller: null
 };
 if (![1, 2, 3].includes(state.level)) state.level = 1;
+// Modelli ritirati da OpenRouter: passa in automatico al modello predefinito
+const MODELLI_RITIRATI = ["nousresearch/hermes-3-llama-3.1-70b", "nousresearch/hermes-3-llama-3.1-70b:online"];
+if (MODELLI_RITIRATI.includes(state.model)) { state.model = CONFIG.MODELLO_DEFAULT; store.set("oov_model", state.model); }
 if (!Array.isArray(state.players)) state.players = [];
 
 const $ = (id) => document.getElementById(id);
@@ -751,7 +754,8 @@ async function generaSfida(type) {
         model: state.model || CONFIG.MODELLO_DEFAULT,
         messages: buildMessages(player, type),
         temperature: CONFIG.TEMPERATURE,
-        max_tokens: CONFIG.MAX_TOKENS
+        max_tokens: CONFIG.MAX_TOKENS,
+        reasoning: { enabled: false }
       })
     });
 

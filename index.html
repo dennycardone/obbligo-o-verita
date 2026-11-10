@@ -142,7 +142,7 @@
   .turn .who[data-g="F"] { --g: var(--dare); }
 
   .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; perspective: 900px; }
-  .choice { --c: var(--dare); position: relative; height: clamp(230px, 38vh, 320px); border-radius: 26px; border: 2px solid var(--c); background: linear-gradient(160deg, color-mix(in srgb, var(--c) 22%, transparent), rgba(10, 8, 18, .7) 60%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 12px; box-shadow: 0 0 30px -4px var(--c), 0 0 26px -8px var(--c) inset; transform: rotate(-2.5deg); transition: transform .18s cubic-bezier(.2, 1.4, .4, 1), box-shadow .2s; animation: glow 2.6s ease-in-out infinite; }
+  .choice { --c: var(--dare); position: relative; height: 230px; border-radius: 26px; border: 2px solid var(--c); background: linear-gradient(160deg, color-mix(in srgb, var(--c) 22%, transparent), rgba(10, 8, 18, .7) 60%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 12px; box-shadow: 0 0 30px -4px var(--c), 0 0 26px -8px var(--c) inset; transform: rotate(-2.5deg); transition: transform .18s cubic-bezier(.2, 1.4, .4, 1), box-shadow .2s; animation: glow 2.6s ease-in-out infinite; }
   .choice.truth { --c: var(--truth); transform: rotate(2.5deg); animation-delay: 1.3s; }
   .choice:active { transform: rotate(0) scale(.94); }
   .choice svg { width: 54px; height: 54px; color: #fff; filter: drop-shadow(0 0 6px var(--c)) drop-shadow(0 0 14px var(--c)); }
@@ -163,7 +163,7 @@
   .card .kind { font-family: var(--neon); font-size: 22px; color: #fff; text-shadow: 0 0 4px #fff, 0 0 12px var(--c), 0 0 26px var(--c); margin: 0 0 14px; text-transform: capitalize; }
   .card .text { margin: 0; font-size: 22px; line-height: 1.38; font-weight: 500; overflow-wrap: anywhere; }
   .timer { display: flex; align-items: center; gap: 14px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
-  .timer-btn { position: relative; width: 68px; height: 68px; flex: none; border-radius: 50%; display: grid; place-items: center; transition: transform .12s; box-shadow: 0 0 18px -2px var(--c), 0 0 14px -6px var(--c) inset; }
+  .timer-btn { position: relative; width: 68px; height: 68px; flex: none; border-radius: 50%; display: grid; place-items: center; transition: transform .12s; }
   .timer-btn:active { transform: scale(.92); }
   .timer-btn svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
   .timer-btn circle { fill: none; stroke-width: 3.5; }
@@ -218,21 +218,77 @@
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     .orb::before, .orb::after { animation-duration: 2s !important; animation-iteration-count: infinite !important; }
   }
+
+  /* ================= Versione 13: fascia logo, niente scorrimento, chicche ================= */
+  .app { min-height: 100dvh; height: 100dvh; padding: 0 16px 12px; }
+  header.band { display: block; position: relative; margin: 0 -16px; padding: clamp(12px, 2.4vh, 20px) 60px clamp(10px, 2vh, 16px); text-align: center; background: linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,0)); }
+  header.band::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--dare) 25%, #fff 50%, var(--truth) 75%, transparent); box-shadow: 0 0 14px var(--accent); opacity: .85; }
+  .logo { font-size: clamp(30px, 9.6vw, 44px); line-height: .98; }
+  .band-btn { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); display: grid; place-items: center; }
+  .band-btn:active { transform: translateY(-50%) scale(.9); }
+  .band-btn svg { width: 22px; height: 22px; }
+  .round { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-family: var(--neon); font-size: 18px; color: var(--muted); }
+
+  #setup { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; padding-top: clamp(12px, 2.6vh, 24px); }
+  #setup .section { margin: 0; }
+  .label { margin-bottom: 10px; }
+  .field { height: 50px; }
+  .add-btn { width: 50px; height: 50px; }
+  .g-opt { height: 40px; width: 36px; }
+  .chips { flex-wrap: nowrap; overflow-x: auto; margin-top: 12px; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; }
+  .empty { margin-top: 12px; }
+  .level { padding: clamp(10px, 1.8vh, 16px) 6px; }
+  .level .num { font-size: clamp(38px, 6.4vh, 52px); }
+  .level .name { font-size: 14px; margin: 4px 0 9px; }
+  .shuffle { position: relative; align-self: center; display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); font-size: 14px; font-weight: 500; color: var(--muted); transition: all .2s; }
+  .shuffle input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .shuffle svg { width: 18px; height: 18px; }
+  .shuffle:has(input:checked) { color: #0b0710; background: var(--accent); border-color: transparent; box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 60%, transparent); }
+  .btn { height: 58px; }
+  #setupHint { margin: 6px 0 0; min-height: 0; }
+  .foot { display: flex; align-items: center; justify-content: center; gap: 16px; min-height: 30px; }
+  .gear-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); opacity: .45; padding: 6px 8px; }
+  .gear-link svg { width: 14px; height: 14px; }
+  .install-btn { height: 30px; padding: 0 14px; font-size: 13px; }
+
+  #game { min-height: 0; }
+  .badge { align-self: center; margin-top: clamp(10px, 2vh, 18px); display: inline-flex; align-items: center; gap: 8px; }
+  .badge svg { width: 14px; height: 14px; }
+  .badge.flash { animation: flash .5s; }
+  .turn { margin: clamp(8px, 2.4vh, 26px) 0 clamp(12px, 2.8vh, 28px); }
+  .turn .who.spin { animation: none; opacity: .7; filter: blur(1.2px); }
+  .choices { align-content: start; transition: opacity .2s; }
+  .choices.wait { pointer-events: none; opacity: .4; }
+  .choice { height: clamp(180px, 33vh, 300px); }
+  .choice.lit { transform: rotate(0) scale(1.06); box-shadow: 0 0 60px 4px var(--c), 0 0 40px -4px var(--c) inset; }
+  .luck { grid-column: 1 / -1; justify-self: center; margin-top: clamp(4px, 1.6vh, 16px); display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 999px; border: 1px dashed rgba(255,255,255,.3); color: var(--muted); font-size: 14px; font-weight: 500; }
+  .luck svg { width: 18px; height: 18px; }
+  .luck:active { transform: scale(.95); }
+  #result { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .card { min-height: 0; display: flex; flex-direction: column; }
+  .card .text { overflow-y: auto; min-height: 0; font-size: clamp(19px, 5.6vw, 22px); }
+  .actions { margin-top: 14px; }
+  .spark { position: absolute; left: 50%; top: 30%; width: 7px; height: 7px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c), 0 0 18px var(--c); pointer-events: none; animation: spark .75s cubic-bezier(.1, .7, .3, 1) forwards; }
+  @keyframes spark { to { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; } }
+  @keyframes flash { 30% { transform: scale(1.18); box-shadow: 0 0 40px var(--accent); } }
+  .sheet .plan { background: var(--bg); }
+  .timer-btn { box-shadow: 0 0 18px -2px var(--c), 0 0 14px -6px var(--c) inset; }
+  .card .text.long { font-size: 17px; line-height: 1.34; }
+  .chips { margin-right: -16px; padding-right: 16px; mask-image: linear-gradient(90deg, #000 86%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 86%, transparent); }
 </style>
 </head>
 <body data-level="1">
 <div class="bg" aria-hidden="true"><i></i><i></i></div>
 <div class="app">
 
-  <header>
-    <h1 class="logo"><span class="tube d">Obbligo</span><span class="o">o</span><br><span class="tube t">Verità</span></h1>
-    <button class="install-btn" id="installBtn" hidden>Installa</button>
-    <button class="icon-btn" id="settingsBtn" aria-label="Impostazioni">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="3.2"/>
-        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.03z"/>
-      </svg>
+  <header class="band">
+    <button class="band-btn" id="backBtn" aria-label="Indietro" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
+    <h1 class="logo"><span class="tube d">Obbligo</span><span class="o">o</span><br><span class="tube t">Verità</span></h1>
+    <span class="round" id="roundInfo" aria-live="polite"></span>
   </header>
 
   <!-- ================= SETUP ================= -->
@@ -258,32 +314,30 @@
         <button class="level" role="radio" data-level="2" aria-checked="false"><span class="num">2</span><span class="name" data-nome="2"></span><span class="heat"><i></i><i></i><i></i><i></i><i></i></span></button>
         <button class="level" role="radio" data-level="3" aria-checked="false"><span class="num">3</span><span class="name" data-nome="3"></span><span class="heat"><i></i><i></i><i></i><i></i><i></i></span></button>
       </div>
-      <p class="hint" id="levelDesc"></p>
     </section>
 
-    <section class="section">
-      <p class="label"><b>3</b>Opzioni</p>
-      <div class="plan" role="radiogroup" aria-label="Modalità">
-        <button type="button" class="plan-opt" role="radio" data-plan="gratis" aria-checked="false">Gratis</button>
-        <button type="button" class="plan-opt" role="radio" data-plan="pagamento" aria-checked="true">A pagamento</button>
+    <label class="shuffle">
+      <input type="checkbox" id="randomToggle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h3.5c5 0 5.5 10 10.5 10H21"/><path d="M3 17h3.5c1.5 0 2.6-.900 3.5-2.200M21 7h-4c-1.5 0-2.6.900-3.5 2.2"/><path d="M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>
+      <span>Turni a sorpresa</span>
+    </label>
+
+    <div>
+      <button class="btn btn-primary" id="startBtn" disabled>Si gioca</button>
+      <p class="hint" id="setupHint"></p>
+      <div class="foot">
+        <button class="install-btn" id="installBtn" hidden>Installa</button>
+        <button class="gear-link" id="settingsBtn" aria-label="Impostazioni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.2"/>
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.03z"/>
+      </svg><span>Impostazioni</span></button>
       </div>
-      <p class="hint" id="planHint"></p>
-      <label class="toggle-row" style="margin-top:14px">
-        <span>Turni in ordine casuale</span>
-        <span class="switch"><input type="checkbox" id="randomToggle"><span></span></span>
-      </label>
-    </section>
-
-    <button class="btn btn-primary" id="startBtn" disabled>Si gioca</button>
-    <p class="hint" id="setupHint"></p>
+    </div>
   </main>
 
   <!-- ================= GAME ================= -->
   <main id="game" hidden>
-    <div class="game-top">
-      <button class="link-btn" id="backBtn">← Giocatori</button>
-      <span class="badge" id="levelBadge">Livello 1</span>
-    </div>
+    <button class="badge" id="levelBadge" aria-label="Cambia livello"></button>
 
     <div class="turn">
       <small>Tocca a</small>
@@ -300,6 +354,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.500h16v10.500H10.500L5.5 20v-4H4z"/><path d="M9.8 9.200a2.2 2.2 0 1 1 3.3 1.900c-.7.4-1.1.800-1.1 1.5"/><path d="M12 14.300v.1"/></svg>
         <b>Verità</b>
         <small>una domanda, senza bugie</small>
+      </button>
+      <button class="luck" id="luckBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 9v.1M15 9v.1M12 12v.1M9 15v.1M15 15v.1"/></svg>
+        Decide la sorte
       </button>
     </div>
 
@@ -346,6 +404,14 @@
     </div>
     <form id="settingsForm" autocomplete="off">
       <div class="form-group">
+        <label>Modalità</label>
+        <div class="plan" role="radiogroup" aria-label="Modalità">
+          <button type="button" class="plan-opt" role="radio" data-plan="gratis" aria-checked="false">Gratis</button>
+          <button type="button" class="plan-opt" role="radio" data-plan="pagamento" aria-checked="true">A pagamento</button>
+        </div>
+        <small id="planHint"></small>
+      </div>
+      <div class="form-group">
         <label for="apiKey">API Key OpenRouter</label>
         <div class="key-row">
           <input class="field" id="apiKey" type="password" placeholder="sk-or-v1-…" spellcheck="false" autocapitalize="off">
@@ -387,13 +453,13 @@ const PROMPTS_LIVELLI = {
   3: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 3 – INTENSITÀ 80% – NUDI. VERITÀ: domande esplicite e dettagliate sulle fantasie più sporche e su cosa vorresti fare o farti fare adesso e da chi dei presenti. OBBLIGHI, azioni ammesse: nudità completa, masturbarsi davanti agli altri, masturbazione reciproca, stimolazione diretta dei genitali con mani, bocca e lingua, sesso orale, sex toys se disponibili, dominazione e sottomissione con ordini da eseguire, bendature e polsi legati, azioni a tre in cui due giocatori si dedicano insieme al terzo. LIMITI: niente penetrazione e niente rapporto completo (è il 100% e resta fuori dal gioco). INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi. DURATA: ogni obbligo ha una durata precisa, sempre scritta nella sfida, compresa tra 30 secondi e 1 minuto e 30 secondi: mai meno di 30 secondi, mai più di 1 minuto e 30. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video."
 };
 
-const VERSIONE = "12";
+const VERSIONE = "13";
 
 // Nome e descrizione mostrati per ogni livello
 const LIVELLI_INFO = {
-  1: { nome: "Vestiti",   desc: "Tutti vestiti · intensità 40%" },
-  2: { nome: "In intimo", desc: "Si resta in intimo · intensità 60%" },
-  3: { nome: "Nudi",      desc: "Senza niente addosso · intensità 80%" }
+  1: { nome: "Scintilla" },
+  2: { nome: "Fiamma" },
+  3: { nome: "Incendio" }
 };
 
 const CONFIG = {
@@ -596,16 +662,23 @@ document.querySelectorAll(".plan-opt").forEach((b) => {
     state.plan = b.dataset.plan;
     store.set("oov_plan", state.plan);
     renderPlan();
+    $("model").value = gratis() ? state.modelFree : state.model;
+    $("modelLabel").textContent = gratis() ? "Modello gratuito" : "Modello a pagamento";
+    $("webGroup").hidden = gratis();
+    $("versionInfo").textContent = "Versione " + VERSIONE + " · " + (gratis() ? "Gratis" : "A pagamento");
+    riempiMenuModelli();
   });
 });
+
+const FIAMMA = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c.6 3.400 5 5.600 5 11a5 5 0 0 1-10 0c0-1.700.5-3 1.500-4.200.1 2 .9 3.100 2.100 3.400C10.300 8.700 10.800 5.600 12 2z"/></svg>'.replace(/(\d)00\b/g, "$1");
 
 function renderLevel() {
   document.body.dataset.level = state.level;
   document.querySelectorAll(".level").forEach((b) => {
     b.setAttribute("aria-checked", String(Number(b.dataset.level) === state.level));
   });
-  $("levelBadge").textContent = state.level + " · " + LIVELLI_INFO[state.level].nome;
-  $("levelDesc").textContent = LIVELLI_INFO[state.level].desc;
+  $("levelBadge").innerHTML = FIAMMA + "<span></span>";
+  $("levelBadge").lastChild.textContent = LIVELLI_INFO[state.level].nome;
   document.querySelectorAll("[data-nome]").forEach((e) => { e.textContent = LIVELLI_INFO[e.dataset.nome].nome; });
 }
 document.querySelectorAll(".level").forEach((b) => {
@@ -622,18 +695,97 @@ $("randomToggle").addEventListener("change", (e) => {
   store.set("oov_random", state.random);
 });
 
-$("startBtn").addEventListener("click", () => {
-  state.turn = state.random ? Math.floor(Math.random() * state.players.length) : 0;
-  $("setup").hidden = true;
-  $("game").hidden = false;
-  showTurn();
+let wakeLock = null;
+async function schermoAcceso(on) {
+  try {
+    if (on && navigator.wakeLock) wakeLock = await navigator.wakeLock.request("screen");
+    else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch {}
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && !$("game").hidden) schermoAcceso(true);
 });
 
-$("backBtn").addEventListener("click", () => {
+$("startBtn").addEventListener("click", () => {
+  state.turn = state.random ? Math.floor(Math.random() * state.players.length) : 0;
+  state.giri = 0;
+  $("roundInfo").textContent = "";
+  $("setup").hidden = true;
+  $("game").hidden = false;
+  $("backBtn").hidden = false;
+  try { history.pushState({ oov: "game" }, ""); } catch {}
+  schermoAcceso(true);       // lo schermo non si spegne durante la partita
+  showTurn(state.random);
+});
+
+function tornaAiGiocatori() {
   abortRequest();
+  clearInterval(rouletteInt);
+  fermaTimer();
   $("game").hidden = true;
   $("setup").hidden = false;
+  $("backBtn").hidden = true;
+  $("roundInfo").textContent = "";
+  schermoAcceso(false);
+}
+// Il tasto indietro in alto e quello del telefono fanno la stessa cosa
+$("backBtn").addEventListener("click", () => {
+  let viaStoria = false;
+  try { viaStoria = !!(history.state && history.state.oov); } catch {}
+  if (viaStoria) history.back(); else tornaAiGiocatori();
 });
+window.addEventListener("popstate", () => {
+  if (!$("settings").hidden) { closeSettings(); try { history.pushState({ oov: "game" }, ""); } catch {} return; }
+  if (!$("game").hidden) tornaAiGiocatori();
+});
+
+// Tocca il livello durante la partita per alzare (o riabbassare) la temperatura
+$("levelBadge").addEventListener("click", () => {
+  state.level = state.level % 3 + 1;
+  store.set("oov_level", state.level);
+  renderLevel();
+  vibra([20, 30, 20]);
+  const b = $("levelBadge");
+  b.classList.remove("flash"); void b.offsetWidth; b.classList.add("flash");
+});
+
+// «Decide la sorte»: le due carte si accendono a turno e ne resta una
+$("luckBtn").addEventListener("click", () => {
+  const carte = [...document.querySelectorAll(".choice")];
+  if (carte.length < 2) return;
+  const finale = Math.random() < 0.5 ? 0 : 1;
+  const passi = 8 + finale;
+  let k = 0;
+  $("choices").classList.add("wait");
+  const t = setInterval(() => {
+    carte.forEach((c, i) => c.classList.toggle("lit", i === k % 2));
+    vibra(6);
+    if (++k > passi) {
+      clearInterval(t);
+      setTimeout(() => {
+        carte.forEach((c) => c.classList.remove("lit"));
+        $("choices").classList.remove("wait");
+        vibra(30);
+        generaSfida(carte[finale].dataset.type);
+      }, 380);
+    }
+  }, 130);
+});
+
+function scintille(tipo) {
+  if (pocoMoto) return;
+  const colore = tipo === "Obbligo" ? "var(--dare)" : "var(--truth)";
+  for (let i = 0; i < 18; i++) {
+    const s = document.createElement("i");
+    s.className = "spark";
+    const ang = Math.random() * Math.PI * 2, dist = 90 + Math.random() * 130;
+    s.style.setProperty("--c", colore);
+    s.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+    s.style.setProperty("--dy", Math.sin(ang) * dist + "px");
+    $("result").append(s);
+    setTimeout(() => s.remove(), 800);
+  }
+}
 
 /* =====================================================================
    GIOCO
@@ -642,14 +794,34 @@ function showOnly(id) {
   ["choices", "loading", "result", "error"].forEach((x) => { $(x).hidden = x !== id; });
 }
 
-function showTurn() {
-  if (state.turn >= state.players.length) state.turn = 0;
-  const who = $("who");
-  who.textContent = state.players[state.turn].name;
-  who.dataset.g = state.players[state.turn].g || "";
+const pocoMoto = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+let rouletteInt = null;
+function showTurn(sorteggio) {
+  const n = state.players.length;
+  if (state.turn >= n) state.turn = 0;
   fermaTimer();
-  who.style.animation = "none"; void who.offsetWidth; who.style.animation = "";
+  clearInterval(rouletteInt);
+  const who = $("who");
+  const scelto = state.players[state.turn];
+  const mostra = (p) => { who.textContent = p.name; who.dataset.g = p.g || ""; };
+  const fissa = () => {
+    mostra(scelto);
+    who.classList.remove("spin");
+    $("choices").classList.remove("wait");
+    who.style.animation = "none"; void who.offsetWidth; who.style.animation = "";
+  };
   showOnly("choices");
+  if (!sorteggio || n < 3 || pocoMoto) { fissa(); return; }
+  // Roulette dei nomi: scorre i giocatori e si ferma su quello estratto
+  let k = 0;
+  const giri = n * 2 + Math.floor(Math.random() * n);
+  who.classList.add("spin");
+  $("choices").classList.add("wait");
+  rouletteInt = setInterval(() => {
+    mostra(state.players[(state.turn + 1 + k) % n]);
+    vibra(4);
+    if (++k >= giri) { clearInterval(rouletteInt); fissa(); vibra(30); }
+  }, 85);
 }
 
 function nextPlayer() {
@@ -661,7 +833,7 @@ function nextPlayer() {
   } else {
     state.turn = (state.turn + 1) % n;
   }
-  showTurn();
+  showTurn(state.random);
 }
 
 document.querySelectorAll(".choice").forEach((b) => {
@@ -954,8 +1126,13 @@ async function generaSfida(type) {
     card.classList.toggle("truth", type === "Verità");
     $("cardKind").textContent = type + " · " + player.name;
     $("cardText").textContent = testo;
+    $("cardText").classList.toggle("long", testo.length > 170);
+    $("cardText").scrollTop = 0;
     showOnly("result");
     preparaTimer(type, testo);
+    scintille(type);
+    state.giri = (state.giri || 0) + 1;
+    $("roundInfo").textContent = "#" + state.giri;
     vibra(type === "Obbligo" ? [30, 40, 30] : 30);
     card.style.animation = "none"; void card.offsetWidth; card.style.animation = "";
   } catch (err) {

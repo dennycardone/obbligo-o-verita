@@ -342,6 +342,9 @@
   .key-row { display: flex; gap: 8px; }
   .key-row .field { flex: 1; min-width: 0; }
   .key-row button { flex: none; padding: 0 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); font-size: 13px; color: var(--muted); }
+  .model-select { font-family: var(--body) !important; appearance: none; -webkit-appearance: none; padding-right: 40px;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 22px) 23px, calc(100% - 16px) 23px; background-size: 6px 6px; background-repeat: no-repeat; }
   .form-group .toggle-row { display: flex; margin-bottom: 0; font-size: 15px; background: var(--bg); }
   .saved { color: var(--l1); font-size: 14px; text-align: center; margin: 12px 0 0; min-height: 20px; }
 
@@ -466,8 +469,11 @@
       </div>
       <div class="form-group">
         <label for="model">Modello</label>
-        <input class="field" id="model" type="text" spellcheck="false" autocapitalize="off">
-        <small>Nome del modello su OpenRouter (es. nousresearch/hermes-4-70b). Il suffisso :online non serve più.</small>
+        <select class="field model-select" id="modelSelect" aria-label="Scegli un modello disponibile">
+          <option value="">Caricamento modelli disponibili…</option>
+        </select>
+        <input class="field" id="model" type="text" spellcheck="false" autocapitalize="off" aria-label="Nome del modello" style="margin-top:8px">
+        <small>Scegli dal menu un modello attivo sul tuo account, oppure scrivine il nome. Se il modello scelto viene ritirato, l'app ne sceglie da sola un altro disponibile.</small>
       </div>
       <div class="form-group">
         <label class="toggle-row">
@@ -496,6 +502,7 @@ const PROMPTS_LIVELLI = {
 
 const CONFIG = {
   ENDPOINT: "https://openrouter.ai/api/v1/chat/completions",
+  MODELS_ENDPOINT: "https://openrouter.ai/api/v1/models",
   MODELLO_DEFAULT: "nousresearch/hermes-4-70b",
   WEB_MAX_RISULTATI: 3,   // quanti risultati web passare al modello
   MAX_STORICO: 15,        // quante sfide recenti ricordare e passare al modello
@@ -503,6 +510,17 @@ const CONFIG = {
   MAX_TOKENS: 500,
   TIMEOUT_MS: 60000
 };
+
+// Se il modello scelto non è disponibile, l'app ne sceglie uno tra quelli attivi,
+// in quest'ordine di preferenza (famiglie di modelli poco censurati).
+const MODELLI_PREFERITI = [
+  /^nousresearch\/hermes/i,
+  /^thedrummer\//i,
+  /^sao10k\//i,
+  /^mistralai\/mistral-(nemo|small)/i,
+  /^x-ai\/grok/i,
+  /^deepseek\//i
+];
 
 // Regole di formato aggiunte in coda al System Prompt di ogni livello.
 const REGOLE_OUTPUT =
@@ -542,6 +560,45 @@ const MODELLI_RITIRATI = ["nousresearch/hermes-3-llama-3.1-70b"];
 state.model = normalizzaModello(state.model);
 if (MODELLI_RITIRATI.includes(state.model)) state.model = CONFIG.MODELLO_DEFAULT;
 store.set("oov_model", state.model);
+
+let cacheModelli = null;
+async function caricaModelli() {
+  if (cacheModelli) return cacheModelli;
+  const leggi = async (url, auth) => {
+    const h = auth && state.apiKey ? { Authorization: "Bearer " + state.apiKey } : {};
+    const r = await fetch(url, { headers: h });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    return Array.isArray(j.data) ? j.data : [];
+  };
+  let lista = [];
+  try { lista = await leggi(CONFIG.MODELS_ENDPOINT + "/user", true); } catch {}
+  if (!lista.length) { try { lista = await leggi(CONFIG.MODELS_ENDPOINT, false); } catch {} }
+  lista = lista
+    .filter((m) => m && m.id && !/^openrouter\//.test(m.id))
+    .filter((m) => {
+      const out = m.architecture && m.architecture.output_modalities;
+      return !out || out.includes("text");
+    })
+    .map((m) => ({ id: m.id, name: m.name || m.id, created: m.created || 0, prezzo: Number(m.pricing && m.pricing.prompt) || 0 }));
+  if (lista.length) cacheModelli = lista;
+  return lista;
+}
+
+function scegliModello(lista, escludi) {
+  const validi = lista.filter((m) => m.id !== escludi && !m.id.endsWith(":free"));
+  for (const re of MODELLI_PREFERITI) {
+    const trovati = validi.filter((m) => re.test(m.id)).sort((a, b) => b.created - a.created);
+    if (trovati.length) return trovati[0].id;
+  }
+  return validi.length ? validi[0].id : null;
+}
+
+function modelloNonDisponibile(res, data) {
+  const msg = String(data && data.error && data.error.message || "").toLowerCase();
+  return res.status === 404 || (data && data.error && data.error.code === 404) ||
+    msg.includes("no longer available") || msg.includes("not a valid model") || msg.includes("no endpoints found");
+}
 if (!Array.isArray(state.players)) state.players = [];
 
 const $ = (id) => document.getElementById(id);
@@ -775,14 +832,30 @@ async function generaSfida(type) {
     return { res: r, data: d };
   };
 
-  try {
-    let { res, data } = await chiama(state.web);
-
+  const ok = (r) => r.res.ok && !(r.data && r.data.error);
+  const prova = async () => {
+    const r = await chiama(state.web);
     // Se il modello non supporta lo strumento di ricerca web, riprova senza
-    if (state.web && (res.status === 400 || res.status === 404 || (data && data.error && [400, 404].includes(data.error.code)))) {
-      const retry = await chiama(false);
-      if (retry.res.ok && !(retry.data && retry.data.error)) ({ res, data } = retry);
+    if (!ok(r) && state.web && (r.res.status === 400 || r.res.status === 404 || (r.data && r.data.error && [400, 404].includes(r.data.error.code)))) {
+      return await chiama(false);
     }
+    return r;
+  };
+
+  try {
+    let r = await prova();
+
+    // Modello ritirato o non servito: scegline uno disponibile e riprova
+    if (!ok(r) && modelloNonDisponibile(r.res, r.data)) {
+      $("loadingText").textContent = "Cerco un modello disponibile…";
+      const nuovo = scegliModello(await caricaModelli(), normalizzaModello(state.model));
+      if (nuovo) {
+        state.model = nuovo;
+        store.set("oov_model", nuovo);
+        r = await prova();
+      }
+    }
+    const { res, data } = r;
 
     if (!res.ok || (data && data.error)) {
       const apiMsg = data && data.error && (data.error.message || data.error.code) || "";
@@ -843,12 +916,38 @@ function openSettings() {
   $("toggleKey").textContent = "Mostra";
   $("model").value = state.model;
   $("webToggle").checked = !!state.web;
+  riempiMenuModelli();
   $("savedMsg").textContent = "";
   $("settings").hidden = false;
 }
 function closeSettings() { $("settings").hidden = true; }
 
+async function riempiMenuModelli() {
+  const sel = $("modelSelect");
+  const lista = await caricaModelli();
+  sel.textContent = "";
+  const opt = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; return o; };
+  if (!lista.length) {
+    sel.append(opt("", state.apiKey ? "Elenco non disponibile: scrivi il nome qui sotto" : "Inserisci prima l'API Key e salva"));
+    return;
+  }
+  const attuale = normalizzaModello($("model").value || state.model);
+  sel.append(opt("", "Scegli un modello…"));
+  const prezzo = (m) => m.prezzo ? " · $" + (m.prezzo * 1e6).toFixed(2) + "/M" : " · gratis";
+  const consigliati = lista.filter((m) => MODELLI_PREFERITI.some((re) => re.test(m.id))).sort((a, b) => b.created - a.created);
+  const altri = lista.filter((m) => !consigliati.includes(m)).sort((a, b) => a.name.localeCompare(b.name));
+  [["Consigliati", consigliati], ["Tutti i modelli", altri]].forEach(([nome, gruppo]) => {
+    if (!gruppo.length) return;
+    const g = document.createElement("optgroup");
+    g.label = nome;
+    gruppo.forEach((m) => g.append(opt(m.id, m.name + prezzo(m))));
+    sel.append(g);
+  });
+  if (lista.some((m) => m.id === attuale)) sel.value = attuale;
+}
+
 $("settingsBtn").addEventListener("click", openSettings);
+$("modelSelect").addEventListener("change", (e) => { if (e.target.value) $("model").value = e.target.value; });
 $("closeSettings").addEventListener("click", closeSettings);
 $("settings").addEventListener("click", (e) => { if (e.target === $("settings")) closeSettings(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSettings(); });

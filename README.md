@@ -1,29 +1,22 @@
-# Obbligo o Verità 🔥
+# Obbligo o Verità
 
-Gioco interattivo di **Obbligo o Verità** (Truth or Dare) in italiano, pronto per essere giocato nel browser.
+Web app di **Obbligo o Verità** con 3 livelli. Le sfide non arrivano da un database fisso: ognuna viene generata al momento da un modello IA tramite **OpenRouter** (con ricerca web usando un modello `:online`).
 
-## Come giocare
+Giocala qui: https://dennycardone.github.io/obbligo-o-verita/
 
-1. Apri `index.html` nel browser (o pubblica su GitHub Pages).
-2. Scegli la modalità: **Classica** o **Piccante 🌶️**.
-3. Aggiungi i nomi dei giocatori (minimo 2).
-4. A turno ogni giocatore sceglie **Verità** o **Obbligo**.
-5. Esegue la sfida e passa al prossimo.
+## Come si usa
 
-## Modalità
+1. Tocca l'ingranaggio, incolla la tua API Key di OpenRouter e scegli il modello (es. `nousresearch/hermes-3-llama-3.1-70b:online`).
+2. Aggiungi i giocatori (minimo 2) e scegli il livello 1, 2 o 3.
+3. A turno: **Obbligo** o **Verità** → l'IA genera la sfida.
 
-- **Classica**: Domande e obblighi leggeri, divertenti e adatti a tutti.
-- **Piccante**: Versione più audace per serate tra adulti.
+L'app ricorda le ultime 15 sfide della serata e le passa al modello per evitare ripetizioni.
 
-## Pubblicare su GitHub Pages
+## Personalizzare il tono dei livelli
 
-1. Crea un repository su GitHub chiamato `obbligo-o-verita`.
-2. Carica questi file (`index.html`, `style.css`, `app.js`, `README.md`).
-3. Vai su Settings → Pages → Source: Deploy from branch `main` / root.
-4. Il gioco sarà disponibile su `https://TUO_USERNAME.github.io/obbligo-o-verita/`.
+In `index.html`, in cima allo script, modifica l'oggetto `PROMPTS_LIVELLI` (un System Prompt per ogni livello). Sotto trovi anche `CONFIG` (modello predefinito, numero di sfide da ricordare, temperatura) e `REGOLE_OUTPUT` (formato della risposta).
 
-## Personalizza
+## File
 
-Puoi aggiungere o modificare le domande e gli obblighi direttamente nel file `app.js` (array `truths` e `dares`).
-
-Buon divertimento! 🎉
+- `index.html` — tutta l'app (HTML, CSS, JavaScript)
+- `manifest.json`, `sw.js`, icone — per installarla come app

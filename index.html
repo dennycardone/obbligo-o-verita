@@ -1,96 +1,881 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Obbligo o Verità</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1a1a2e">
-  <link rel="apple-touch-icon" href="icon-192.svg">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07060d">
+<title>Obbligo o Verità</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Obbligo o Verità">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07060d;
+    --panel: #110f1c;
+    --panel-2: #181527;
+    --line: #2a2540;
+    --text: #f2f0ff;
+    --muted: #8f89ad;
+    --dare: #ff2bd6;
+    --truth: #22e3ff;
+    --l1: #3dffa2;
+    --l2: #ffb627;
+    --l3: #ff3d6e;
+    --accent: var(--l1);
+    --radius: 18px;
+    --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--body);
+    color: var(--text);
+    background:
+      radial-gradient(60vmax 60vmax at 110% -10%, rgba(255, 43, 214, .16), transparent 60%),
+      radial-gradient(60vmax 60vmax at -10% 110%, rgba(34, 227, 255, .14), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+    min-height: 100%;
+  }
+  body[data-level="1"] { --accent: var(--l1); }
+  body[data-level="2"] { --accent: var(--l2); }
+  body[data-level="3"] { --accent: var(--l3); }
+
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+  [hidden] { display: none !important; }
+
+  .app {
+    max-width: 520px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    padding: 16px 18px 28px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .logo {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: .02em;
+    line-height: 1.1;
+    margin: 0;
+    flex: 1;
+  }
+  .logo .d { color: var(--dare); text-shadow: 0 0 14px rgba(255, 43, 214, .7); }
+  .logo .t { color: var(--truth); text-shadow: 0 0 14px rgba(34, 227, 255, .7); }
+  .logo .o { color: var(--muted); font-weight: 500; font-size: .75em; }
+  .icon-btn {
+    width: 44px; height: 44px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    display: grid; place-items: center;
+    transition: border-color .2s, box-shadow .2s, transform .1s;
+  }
+  .icon-btn:active { transform: scale(.94); }
+  .icon-btn:hover, .icon-btn:focus-visible { border-color: var(--truth); box-shadow: 0 0 14px rgba(34, 227, 255, .35); outline: none; }
+  .icon-btn svg { width: 22px; height: 22px; }
+  .install-btn {
+    height: 44px;
+    padding: 0 14px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #06120c;
+    background: var(--l1);
+    box-shadow: 0 0 18px rgba(61, 255, 162, .45);
+  }
+
+  /* ---------- Common ---------- */
+  .label {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px;
+  }
+  .section { margin-bottom: 26px; }
+  .field {
+    width: 100%;
+    height: 52px;
+    padding: 0 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .field::placeholder { color: #5f5a7c; }
+  .field:focus { border-color: var(--truth); box-shadow: 0 0 0 3px rgba(34, 227, 255, .15); }
+  .btn {
+    height: 56px;
+    width: 100%;
+    border-radius: 16px;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    transition: transform .1s, opacity .2s, box-shadow .2s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .35; cursor: not-allowed; box-shadow: none !important; }
+  .btn-primary {
+    color: #08070f;
+    background: var(--accent);
+    box-shadow: 0 0 26px color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+  .btn-ghost {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 13px;
+  }
+  .btn-ghost:hover { border-color: var(--muted); }
+  .link-btn { color: var(--muted); font-size: 14px; padding: 10px 4px; }
+  .link-btn:hover { color: var(--text); }
+
+  /* ---------- Setup ---------- */
+  .add-row { display: flex; gap: 10px; }
+  .add-row .field { flex: 1; min-width: 0; }
+  .add-btn {
+    width: 52px; height: 52px; flex: none;
+    border-radius: 14px;
+    background: var(--truth);
+    color: #04161a;
+    font-size: 28px; font-weight: 700; line-height: 1;
+    box-shadow: 0 0 18px rgba(34, 227, 255, .45);
+  }
+  .add-btn:active { transform: scale(.94); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding: 0; list-style: none; }
+  .chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 8px 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    font-weight: 500;
+    animation: pop .25s ease-out;
+  }
+  .chip button {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #241f38; color: var(--muted);
+    font-size: 16px; line-height: 1;
+  }
+  .chip button:hover { color: var(--l3); }
+  .empty { color: var(--muted); font-size: 14px; margin: 14px 0 0; }
+
+  .levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .level {
+    --c: var(--l1);
+    padding: 16px 6px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--panel);
+    text-align: center;
+    transition: border-color .2s, box-shadow .2s, transform .1s;
+  }
+  .level[data-level="2"] { --c: var(--l2); }
+  .level[data-level="3"] { --c: var(--l3); }
+  .level .num {
+    display: block;
+    font-family: var(--display); font-weight: 800; font-size: 34px;
+    color: var(--c); opacity: .55;
+    transition: opacity .2s, text-shadow .2s;
+  }
+  .level .name { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: .08em; text-transform: uppercase; }
+  .level:active { transform: scale(.96); }
+  .level[aria-checked="true"] {
+    border-color: var(--c);
+    box-shadow: 0 0 22px color-mix(in srgb, var(--c) 40%, transparent), inset 0 0 22px color-mix(in srgb, var(--c) 10%, transparent);
+  }
+  .level[aria-checked="true"] .num { opacity: 1; text-shadow: 0 0 18px var(--c); }
+
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 15px;
+  }
+  .switch { position: relative; width: 50px; height: 30px; flex: none; }
+  .switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+  .switch span { position: absolute; inset: 0; border-radius: 999px; background: #2a2540; transition: background .2s; pointer-events: none; }
+  .switch span::after {
+    content: ""; position: absolute; top: 4px; left: 4px;
+    width: 22px; height: 22px; border-radius: 50%; background: #fff;
+    transition: transform .2s;
+  }
+  .switch input:checked + span { background: var(--truth); box-shadow: 0 0 12px rgba(34, 227, 255, .5); }
+  .switch input:checked + span::after { transform: translateX(20px); }
+  .switch input:focus-visible + span { outline: 2px solid var(--truth); outline-offset: 2px; }
+
+  .spacer { flex: 1; }
+  .hint { color: var(--muted); font-size: 13px; text-align: center; margin: 10px 0 0; min-height: 18px; }
+
+  /* ---------- Game ---------- */
+  #game { display: flex; flex-direction: column; flex: 1; }
+  .game-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .badge {
+    font-family: var(--display); font-weight: 500; font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    padding: 7px 12px; border-radius: 999px;
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .turn { text-align: center; margin: 22px 0 26px; }
+  .turn small { display: block; color: var(--muted); letter-spacing: .14em; text-transform: uppercase; font-size: 12px; margin-bottom: 8px; }
+  .turn .who {
+    font-family: var(--display); font-weight: 800;
+    font-size: clamp(30px, 10vw, 46px);
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+    text-shadow: 0 0 24px color-mix(in srgb, var(--accent) 70%, transparent);
+    animation: pop .35s ease-out;
+  }
+
+  .choices { display: grid; gap: 14px; }
+  .choice {
+    --c: var(--dare);
+    height: 108px;
+    border-radius: 22px;
+    border: 2px solid var(--c);
+    background: color-mix(in srgb, var(--c) 9%, var(--panel));
+    color: var(--c);
+    font-family: var(--display); font-weight: 800; font-size: 26px; letter-spacing: .06em; text-transform: uppercase;
+    text-shadow: 0 0 16px var(--c);
+    box-shadow: 0 0 26px color-mix(in srgb, var(--c) 35%, transparent), inset 0 0 26px color-mix(in srgb, var(--c) 12%, transparent);
+    transition: transform .1s, box-shadow .2s;
+  }
+  .choice.truth { --c: var(--truth); }
+  .choice:active { transform: scale(.97); }
+  .choice:hover { box-shadow: 0 0 40px color-mix(in srgb, var(--c) 55%, transparent), inset 0 0 30px color-mix(in srgb, var(--c) 18%, transparent); }
+
+  .loading { text-align: center; padding: 30px 0; }
+  .orb {
+    --c: var(--dare);
+    width: 110px; height: 110px; margin: 0 auto 24px;
+    position: relative;
+  }
+  .orb::before, .orb::after {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    border: 3px solid transparent;
+  }
+  .orb::before { border-top-color: var(--dare); border-right-color: var(--dare); filter: drop-shadow(0 0 8px var(--dare)); animation: spin 1s linear infinite; }
+  .orb::after { inset: 14px; border-bottom-color: var(--truth); border-left-color: var(--truth); filter: drop-shadow(0 0 8px var(--truth)); animation: spin 1.4s linear infinite reverse; }
+  .orb i {
+    position: absolute; inset: 38px; border-radius: 50%;
+    background: var(--c); box-shadow: 0 0 26px var(--c);
+    animation: pulse 1s ease-in-out infinite;
+  }
+  .loading p { margin: 0; color: var(--muted); font-size: 15px; min-height: 22px; }
+
+  .card {
+    --c: var(--dare);
+    border-radius: 24px;
+    border: 2px solid var(--c);
+    background: color-mix(in srgb, var(--c) 7%, var(--panel));
+    box-shadow: 0 0 34px color-mix(in srgb, var(--c) 35%, transparent);
+    padding: 22px 20px 26px;
+    animation: reveal .45s cubic-bezier(.2, .9, .3, 1.2);
+  }
+  .card.truth { --c: var(--truth); }
+  .card .kind {
+    font-family: var(--display); font-weight: 800; font-size: 13px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--c); text-shadow: 0 0 12px var(--c);
+    margin: 0 0 14px;
+  }
+  .card .text { margin: 0; font-size: 21px; line-height: 1.4; font-weight: 500; overflow-wrap: anywhere; }
+  .actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 18px; }
+
+  .error {
+    border-radius: var(--radius);
+    border: 1px solid var(--l3);
+    background: rgba(255, 61, 110, .08);
+    padding: 18px;
+  }
+  .error h3 { margin: 0 0 6px; font-size: 16px; color: var(--l3); }
+  .error p { margin: 0; color: #d9c9d2; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+  .error .actions { grid-template-columns: 1fr 1fr; }
+
+  /* ---------- Settings ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 10;
+    background: rgba(4, 3, 9, .78);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: flex-end; justify-content: center;
+    animation: fade .2s;
+  }
+  .sheet {
+    width: 100%; max-width: 520px; max-height: 92dvh; overflow: auto;
+    background: var(--panel);
+    border: 1px solid var(--line); border-bottom: 0;
+    border-radius: 26px 26px 0 0;
+    padding: 22px 18px 28px;
+    animation: up .28s cubic-bezier(.2, .9, .3, 1);
+  }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .sheet-head h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 18px; }
+  .form-group { margin-bottom: 18px; }
+  .form-group label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+  .form-group small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 7px; line-height: 1.4; }
+  .form-group .field { background: var(--bg); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; }
+  .key-row { display: flex; gap: 8px; }
+  .key-row .field { flex: 1; min-width: 0; }
+  .key-row button { flex: none; padding: 0 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); font-size: 13px; color: var(--muted); }
+  .saved { color: var(--l1); font-size: 14px; text-align: center; margin: 12px 0 0; min-height: 20px; }
+
+  /* ---------- Animations ---------- */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 50% { transform: scale(.6); opacity: .6; } }
+  @keyframes pop { from { transform: scale(.85); opacity: 0; } }
+  @keyframes reveal { from { transform: translateY(18px) scale(.94); opacity: 0; } }
+  @keyframes fade { from { opacity: 0; } }
+  @keyframes up { from { transform: translateY(100%); } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    .orb::before, .orb::after { animation-duration: 2s !important; }
+  }
+</style>
 </head>
-<body>
-  <div class="container">
-    <header>
-      <h1>🔥 Obbligo o Verità 🔥</h1>
-      <p>Gioco di società per amici e coppie</p>
-      <button id="install-btn" class="install-btn hidden">📲 Installa App</button>
-    </header>
+<body data-level="1">
+<div class="app">
 
-    <!-- Setup -->
-    <section id="setup" class="panel">
-      <h2>Imposta il gioco</h2>
-      <div class="mode-selector">
-        <label><input type="radio" name="mode" value="soft" checked> Soft 🔥</label>
-        <label><input type="radio" name="mode" value="medio"> Medio</label>
-        <label><input type="radio" name="mode" value="hard"> Hard 😈</label>
-      </div>
-      <div id="players-list">
-        <div class="player-input">
-          <input type="text" placeholder="Nome giocatore 1" class="player-name">
-        </div>
-      </div>
-      <button id="add-player">+ Aggiungi giocatore</button>
-      <button id="start-game" class="primary">Inizia il gioco</button>
+  <header>
+    <h1 class="logo"><span class="d">OBBLIGO</span> <span class="o">o</span><br><span class="t">VERITÀ</span></h1>
+    <button class="install-btn" id="installBtn" hidden>Installa</button>
+    <button class="icon-btn" id="settingsBtn" aria-label="Impostazioni">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.2"/>
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.03z"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- ================= SETUP ================= -->
+  <main id="setup">
+    <section class="section">
+      <p class="label">Giocatori</p>
+      <form class="add-row" id="addForm" autocomplete="off">
+        <input class="field" id="nameInput" type="text" maxlength="24" placeholder="Nome del giocatore" aria-label="Nome del giocatore" enterkeyhint="done">
+        <button class="add-btn" type="submit" aria-label="Aggiungi giocatore">+</button>
+      </form>
+      <ul class="chips" id="chips"></ul>
+      <p class="empty" id="emptyMsg">Aggiungi almeno 2 giocatori per iniziare.</p>
     </section>
 
-    <!-- Game -->
-    <section id="game" class="panel hidden">
-      <div class="game-header">
-        <h2>Turno di <span id="current-player"></span></h2>
-        <span class="mode-badge" id="mode-badge"></span>
+    <section class="section">
+      <p class="label">Livello</p>
+      <div class="levels" role="radiogroup" aria-label="Livello">
+        <button class="level" role="radio" data-level="1" aria-checked="true"><span class="num">1</span><span class="name">Livello</span></button>
+        <button class="level" role="radio" data-level="2" aria-checked="false"><span class="num">2</span><span class="name">Livello</span></button>
+        <button class="level" role="radio" data-level="3" aria-checked="false"><span class="num">3</span><span class="name">Livello</span></button>
       </div>
-      <div class="choice-buttons">
-        <button id="truth-btn" class="big-btn truth">Verità</button>
-        <button id="dare-btn" class="big-btn dare">Obbligo</button>
-      </div>
-      <div id="prompt-box" class="prompt-box hidden">
-        <h3 id="prompt-type"></h3>
-        <p id="prompt-text"></p>
-        <div class="actions">
-          <button id="done-btn">Fatto!</button>
-          <button id="skip-btn">Salta</button>
-          <button id="new-prompt-btn">Cambia</button>
-        </div>
-      </div>
-      <button id="next-player" class="primary hidden">Prossimo giocatore</button>
     </section>
 
-    <footer>
-      <button id="reset-game" class="hidden">Nuova partita</button>
-    </footer>
+    <section class="section">
+      <label class="toggle-row">
+        <span>Ordine dei turni casuale</span>
+        <span class="switch"><input type="checkbox" id="randomToggle"><span></span></span>
+      </label>
+    </section>
+
+    <button class="btn btn-primary" id="startBtn" disabled>Inizia</button>
+    <p class="hint" id="setupHint"></p>
+  </main>
+
+  <!-- ================= GAME ================= -->
+  <main id="game" hidden>
+    <div class="game-top">
+      <button class="link-btn" id="backBtn">← Giocatori</button>
+      <span class="badge" id="levelBadge">Livello 1</span>
+    </div>
+
+    <div class="turn">
+      <small>Tocca a</small>
+      <div class="who" id="who">—</div>
+    </div>
+
+    <div class="choices" id="choices">
+      <button class="choice" data-type="Obbligo">Obbligo</button>
+      <button class="choice truth" data-type="Verità">Verità</button>
+    </div>
+
+    <div class="loading" id="loading" hidden role="status" aria-live="polite">
+      <div class="orb" id="orb"><i></i></div>
+      <p id="loadingText">Cerco spunti sul web…</p>
+    </div>
+
+    <div id="result" hidden>
+      <article class="card" id="card" aria-live="polite">
+        <p class="kind" id="cardKind">Obbligo</p>
+        <p class="text" id="cardText"></p>
+      </article>
+      <div class="actions">
+        <button class="btn btn-ghost" id="againBtn">Un'altra</button>
+        <button class="btn btn-primary" id="nextBtn">Prossimo</button>
+      </div>
+    </div>
+
+    <div class="error" id="error" hidden role="alert">
+      <h3 id="errorTitle">Qualcosa non va</h3>
+      <p id="errorMsg"></p>
+      <div class="actions">
+        <button class="btn btn-ghost" id="errorSettingsBtn">Impostazioni</button>
+        <button class="btn btn-primary" id="retryBtn">Riprova</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ================= SETTINGS ================= -->
+<div class="overlay" id="settings" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="sheet-head">
+      <h2 id="settingsTitle">Impostazioni</h2>
+      <button class="icon-btn" id="closeSettings" aria-label="Chiudi">✕</button>
+    </div>
+    <form id="settingsForm" autocomplete="off">
+      <div class="form-group">
+        <label for="apiKey">API Key OpenRouter</label>
+        <div class="key-row">
+          <input class="field" id="apiKey" type="password" placeholder="sk-or-v1-…" spellcheck="false" autocapitalize="off">
+          <button type="button" id="toggleKey">Mostra</button>
+        </div>
+        <small>Resta salvata solo su questo dispositivo (localStorage) e viene inviata soltanto a openrouter.ai.</small>
+      </div>
+      <div class="form-group">
+        <label for="model">Modello</label>
+        <input class="field" id="model" type="text" spellcheck="false" autocapitalize="off">
+        <small>Aggiungi <b>:online</b> al nome del modello per attivare la ricerca web.</small>
+      </div>
+      <button class="btn btn-primary" type="submit">Salva</button>
+      <p class="saved" id="savedMsg"></p>
+    </form>
   </div>
-  <script src="app.js"></script>
-  <script>
-    // Service Worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+</div>
+
+<script>
+/* =====================================================================
+   CONFIGURAZIONE — modifica qui
+   ===================================================================== */
+
+// System Prompt per ogni livello: sostituisci i segnaposto con il tono che vuoi.
+const PROMPTS_LIVELLI = {
+  1: "SEGNAPOSTO LIVELLO 1 — Sei l'animatore di una partita a Obbligo o Verità. Tono leggero e divertente, sfide semplici e adatte a rompere il ghiaccio.",
+  2: "SEGNAPOSTO LIVELLO 2 — Sei l'animatore di una partita a Obbligo o Verità. Tono più audace e provocatorio, sfide che mettono un po' in imbarazzo.",
+  3: "SEGNAPOSTO LIVELLO 3 — Sei l'animatore di una partita a Obbligo o Verità. Tono intenso e senza freni, le sfide più difficili della serata."
+};
+
+const CONFIG = {
+  ENDPOINT: "https://openrouter.ai/api/v1/chat/completions",
+  MODELLO_DEFAULT: "nousresearch/hermes-3-llama-3.1-70b:online",
+  MAX_STORICO: 15,        // quante sfide recenti ricordare e passare al modello
+  TEMPERATURE: 1.0,
+  MAX_TOKENS: 300,
+  TIMEOUT_MS: 60000
+};
+
+// Regole di formato aggiunte in coda al System Prompt di ogni livello.
+const REGOLE_OUTPUT =
+  "Rispondi sempre in italiano. Restituisci SOLO il testo della sfida, rivolto direttamente al giocatore (dandogli del tu), " +
+  "in massimo 2 frasi. Niente introduzioni, niente spiegazioni, niente elenchi, niente virgolette, niente link, niente fonti o citazioni.";
+
+/* =====================================================================
+   STATO
+   ===================================================================== */
+const store = {
+  get(key, fallback) {
+    try { const v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); }
+    catch { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  }
+};
+
+const state = {
+  players: store.get("oov_players", []),
+  level: store.get("oov_level", 1),
+  random: store.get("oov_random", false),
+  apiKey: store.get("oov_apiKey", ""),
+  model: store.get("oov_model", CONFIG.MODELLO_DEFAULT),
+  turn: 0,
+  currentType: null,
+  storico: [],            // ultime sfide uscite (max CONFIG.MAX_STORICO)
+  controller: null
+};
+if (![1, 2, 3].includes(state.level)) state.level = 1;
+if (!Array.isArray(state.players)) state.players = [];
+
+const $ = (id) => document.getElementById(id);
+
+/* =====================================================================
+   SETUP: giocatori e livello
+   ===================================================================== */
+function renderPlayers() {
+  const ul = $("chips");
+  ul.textContent = "";
+  state.players.forEach((name, i) => {
+    const li = document.createElement("li");
+    li.className = "chip";
+    const span = document.createElement("span");
+    span.textContent = name;
+    const rm = document.createElement("button");
+    rm.type = "button";
+    rm.textContent = "×";
+    rm.setAttribute("aria-label", "Rimuovi " + name);
+    rm.addEventListener("click", () => {
+      state.players.splice(i, 1);
+      store.set("oov_players", state.players);
+      renderPlayers();
+    });
+    li.append(span, rm);
+    ul.append(li);
+  });
+  $("emptyMsg").hidden = state.players.length >= 2;
+  $("startBtn").disabled = state.players.length < 2;
+}
+
+$("addForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = $("nameInput");
+  const name = input.value.trim().replace(/\s+/g, " ");
+  if (!name) return;
+  if (state.players.some((p) => p.toLowerCase() === name.toLowerCase())) {
+    $("setupHint").textContent = "«" + name + "» è già in lista.";
+    return;
+  }
+  $("setupHint").textContent = "";
+  state.players.push(name);
+  store.set("oov_players", state.players);
+  input.value = "";
+  input.focus();
+  renderPlayers();
+});
+
+function renderLevel() {
+  document.body.dataset.level = state.level;
+  document.querySelectorAll(".level").forEach((b) => {
+    b.setAttribute("aria-checked", String(Number(b.dataset.level) === state.level));
+  });
+  $("levelBadge").textContent = "Livello " + state.level;
+}
+document.querySelectorAll(".level").forEach((b) => {
+  b.addEventListener("click", () => {
+    state.level = Number(b.dataset.level);
+    store.set("oov_level", state.level);
+    renderLevel();
+  });
+});
+
+$("randomToggle").checked = !!state.random;
+$("randomToggle").addEventListener("change", (e) => {
+  state.random = e.target.checked;
+  store.set("oov_random", state.random);
+});
+
+$("startBtn").addEventListener("click", () => {
+  state.turn = state.random ? Math.floor(Math.random() * state.players.length) : 0;
+  $("setup").hidden = true;
+  $("game").hidden = false;
+  showTurn();
+});
+
+$("backBtn").addEventListener("click", () => {
+  abortRequest();
+  $("game").hidden = true;
+  $("setup").hidden = false;
+});
+
+/* =====================================================================
+   GIOCO
+   ===================================================================== */
+function showOnly(id) {
+  ["choices", "loading", "result", "error"].forEach((x) => { $(x).hidden = x !== id; });
+}
+
+function showTurn() {
+  if (state.turn >= state.players.length) state.turn = 0;
+  const who = $("who");
+  who.textContent = state.players[state.turn];
+  who.style.animation = "none"; void who.offsetWidth; who.style.animation = "";
+  showOnly("choices");
+}
+
+function nextPlayer() {
+  const n = state.players.length;
+  if (state.random && n > 1) {
+    let i;
+    do { i = Math.floor(Math.random() * n); } while (i === state.turn);
+    state.turn = i;
+  } else {
+    state.turn = (state.turn + 1) % n;
+  }
+  showTurn();
+}
+
+document.querySelectorAll(".choice").forEach((b) => {
+  b.addEventListener("click", () => generaSfida(b.dataset.type));
+});
+$("againBtn").addEventListener("click", () => generaSfida(state.currentType));
+$("retryBtn").addEventListener("click", () => generaSfida(state.currentType));
+$("nextBtn").addEventListener("click", nextPlayer);
+$("errorSettingsBtn").addEventListener("click", openSettings);
+
+const FRASI_ATTESA = [
+  "Cerco spunti sul web…",
+  "Scarto le idee già viste…",
+  "Preparo qualcosa di originale…",
+  "Ci siamo quasi…"
+];
+let loadingTimer = null;
+function startLoading(type) {
+  const color = type === "Obbligo" ? "var(--dare)" : "var(--truth)";
+  $("orb").style.setProperty("--c", color);
+  let i = 0;
+  $("loadingText").textContent = FRASI_ATTESA[0];
+  clearInterval(loadingTimer);
+  loadingTimer = setInterval(() => {
+    i = Math.min(i + 1, FRASI_ATTESA.length - 1);
+    $("loadingText").textContent = FRASI_ATTESA[i];
+  }, 2600);
+  showOnly("loading");
+}
+function stopLoading() { clearInterval(loadingTimer); }
+
+function abortRequest() {
+  if (state.controller) { state.controller.abort("cancel"); state.controller = null; }
+  stopLoading();
+}
+
+function showError(title, msg) {
+  $("errorTitle").textContent = title;
+  $("errorMsg").textContent = msg;
+  showOnly("error");
+}
+
+/* ---------- Costruzione del prompt ---------- */
+function buildMessages(player, type) {
+  const altri = state.players.filter((p) => p !== player);
+  const storico = state.storico.length
+    ? state.storico.map((s, i) => (i + 1) + ". [" + s.tipo + "] " + s.testo).join("\n")
+    : "(nessuna, è la prima sfida della serata)";
+
+  const system = PROMPTS_LIVELLI[state.level] + "\n\n" + REGOLE_OUTPUT;
+
+  const richiesta = type === "Obbligo"
+    ? "un OBBLIGO (un'azione concreta da compiere subito)"
+    : "una VERITÀ (una domanda personale a cui rispondere sinceramente)";
+
+  const user =
+    "Giocatore di turno: " + player + "\n" +
+    "Tipo scelto: " + type + "\n" +
+    "Altri giocatori presenti: " + (altri.join(", ") || "nessuno") + "\n\n" +
+    "Cerca sul web idee e spunti reali e originali per il gioco \"Obbligo o Verità\" coerenti con il tono indicato, " +
+    "poi scrivi " + richiesta + " per " + player + ". Puoi coinvolgere gli altri giocatori chiamandoli per nome.\n\n" +
+    "Sfide già uscite stasera — NON ripeterle e non proporre nulla di simile nel contenuto o nel meccanismo:\n" +
+    storico + "\n\n" +
+    "Rispondi solo con il testo della sfida.";
+
+  return [
+    { role: "system", content: system },
+    { role: "user", content: user }
+  ];
+}
+
+/* ---------- Pulizia della risposta (citazioni web, markdown, etichette) ---------- */
+function pulisciTesto(raw) {
+  let t = String(raw || "");
+  t = t.replace(/<think>[\s\S]*?<\/think>/gi, "");
+  t = t.replace(/\(?\[[^\]]*\]\(https?:\/\/[^)]+\)\)?/g, "");   // [fonte](url)
+  t = t.replace(/https?:\/\/\S+/g, "");                           // url nudi
+  t = t.replace(/\[\d+\]/g, "");                                  // [1]
+  t = t.replace(/[*_#`]+/g, "");                                  // markdown
+  t = t.replace(/\s+/g, " ").trim();
+  t = t.replace(/^(obbligo|verit[àa]|sfida)\s*[:\-–—]\s*/i, "");
+  t = t.replace(/^["«“'\s]+|["»”'\s]+$/g, "");
+  t = t.replace(/\s+([.,;:!?])/g, "$1");
+  return t.trim();
+}
+
+/* ---------- Chiamata API ---------- */
+async function generaSfida(type) {
+  if (!type) return;
+  state.currentType = type;
+
+  if (!state.apiKey) {
+    showError("Manca l'API Key", "Apri le Impostazioni e incolla la tua API Key di OpenRouter per generare le sfide.");
+    return;
+  }
+
+  abortRequest();
+  const player = state.players[state.turn];
+  const controller = new AbortController();
+  state.controller = controller;
+  const timeout = setTimeout(() => controller.abort("timeout"), CONFIG.TIMEOUT_MS);
+  startLoading(type);
+
+  const headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + state.apiKey,
+    "X-Title": "Obbligo o Verita"
+  };
+  if (location.protocol.startsWith("http")) headers["HTTP-Referer"] = location.origin;
+
+  try {
+    const res = await fetch(CONFIG.ENDPOINT, {
+      method: "POST",
+      headers,
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: state.model || CONFIG.MODELLO_DEFAULT,
+        messages: buildMessages(player, type),
+        temperature: CONFIG.TEMPERATURE,
+        max_tokens: CONFIG.MAX_TOKENS
+      })
+    });
+
+    let data = null;
+    try { data = await res.json(); } catch {}
+
+    if (!res.ok || (data && data.error)) {
+      const apiMsg = data && data.error && (data.error.message || data.error.code) || "";
+      const code = res.ok ? (data.error.code || 0) : res.status;
+      const noti = {
+        400: "Richiesta non valida: controlla il nome del modello nelle Impostazioni.",
+        401: "API Key non valida o scaduta. Controllala nelle Impostazioni.",
+        402: "Credito OpenRouter esaurito. Ricarica il tuo account.",
+        403: "Il modello ha rifiutato la richiesta (moderazione). Prova un altro modello.",
+        404: "Modello non trovato: controlla il nome nelle Impostazioni.",
+        408: "Il modello ha impiegato troppo tempo. Riprova.",
+        429: "Troppe richieste ravvicinate. Aspetta qualche secondo e riprova.",
+        502: "Il provider del modello non risponde. Riprova o cambia modello.",
+        503: "Nessun provider disponibile per questo modello in questo momento."
+      };
+      throw new Error((noti[code] || "Errore " + code + ".") + (apiMsg ? " (" + apiMsg + ")" : ""));
     }
 
-    // PWA Install button
-    let deferredPrompt;
-    const installBtn = document.getElementById('install-btn');
+    const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    const testo = pulisciTesto(Array.isArray(content) ? content.map((c) => c.text || "").join(" ") : content);
+    if (!testo) throw new Error("Il modello ha restituito una risposta vuota. Riprova.");
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      installBtn.classList.remove('hidden');
-    });
+    // Memoria anti-ripetizione: tieni solo le ultime N sfide
+    state.storico.push({ tipo: type, testo });
+    if (state.storico.length > CONFIG.MAX_STORICO) state.storico.shift();
 
-    installBtn.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        installBtn.classList.add('hidden');
+    if (state.controller !== controller) return;
+    const card = $("card");
+    card.classList.toggle("truth", type === "Verità");
+    $("cardKind").textContent = type + " · " + player;
+    $("cardText").textContent = testo;
+    showOnly("result");
+    card.style.animation = "none"; void card.offsetWidth; card.style.animation = "";
+  } catch (err) {
+    if (controller.signal.aborted) {
+      if (controller.signal.reason === "timeout") {
+        showError("Tempo scaduto", "La risposta sta impiegando troppo. Controlla la connessione e riprova.");
       }
-      deferredPrompt = null;
-    });
+      return; // annullata dall'utente: nessun messaggio
+    }
+    const offline = err instanceof TypeError;
+    showError(
+      offline ? "Connessione non riuscita" : "Qualcosa non va",
+      offline ? "Non riesco a raggiungere OpenRouter. Controlla la connessione e riprova." : err.message
+    );
+  } finally {
+    clearTimeout(timeout);
+    if (state.controller === controller) { state.controller = null; stopLoading(); }
+  }
+}
 
-    window.addEventListener('appinstalled', () => {
-      installBtn.classList.add('hidden');
-      deferredPrompt = null;
+/* =====================================================================
+   IMPOSTAZIONI
+   ===================================================================== */
+function openSettings() {
+  $("apiKey").value = state.apiKey;
+  $("apiKey").type = "password";
+  $("toggleKey").textContent = "Mostra";
+  $("model").value = state.model;
+  $("savedMsg").textContent = "";
+  $("settings").hidden = false;
+}
+function closeSettings() { $("settings").hidden = true; }
+
+$("settingsBtn").addEventListener("click", openSettings);
+$("closeSettings").addEventListener("click", closeSettings);
+$("settings").addEventListener("click", (e) => { if (e.target === $("settings")) closeSettings(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeSettings(); });
+
+$("toggleKey").addEventListener("click", () => {
+  const f = $("apiKey");
+  const show = f.type === "password";
+  f.type = show ? "text" : "password";
+  $("toggleKey").textContent = show ? "Nascondi" : "Mostra";
+});
+
+$("settingsForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  state.apiKey = $("apiKey").value.trim();
+  state.model = $("model").value.trim() || CONFIG.MODELLO_DEFAULT;
+  store.set("oov_apiKey", state.apiKey);
+  store.set("oov_model", state.model);
+  $("model").value = state.model;
+  $("savedMsg").textContent = "✓ Salvato";
+  setTimeout(closeSettings, 700);
+});
+
+/* =====================================================================
+   INSTALLAZIONE (PWA) — il pulsante compare quando il browser
+   consente l'installazione e, al tocco, la avvia direttamente.
+   ===================================================================== */
+(function setupInstall() {
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
     });
-  </script>
+  }
+
+  let promptEvent = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    promptEvent = e;
+    $("installBtn").hidden = false;
+  });
+  $("installBtn").addEventListener("click", async () => {
+    if (!promptEvent) return;
+    promptEvent.prompt();
+    try { await promptEvent.userChoice; } catch {}
+    promptEvent = null;
+    $("installBtn").hidden = true;
+  });
+  window.addEventListener("appinstalled", () => { $("installBtn").hidden = true; });
+})();
+
+/* =====================================================================
+   AVVIO
+   ===================================================================== */
+renderPlayers();
+renderLevel();
+</script>
 </body>
 </html>

@@ -620,7 +620,7 @@ async function caricaModelli() {
 
 function scegliModello(lista, escludi, soloGratis) {
   const validi = lista
-    .filter((m) => m.id !== escludi && (soloGratis ? eGratis(m) : !eGratis(m)))
+    .filter((m) => !(escludi instanceof Set ? escludi.has(m.id) : m.id === escludi) && (soloGratis ? eGratis(m) : !eGratis(m)))
     .sort((a, b) => b.created - a.created);
   for (const re of MODELLI_PREFERITI) {
     const trovati = validi.filter((m) => re.test(m.id)).sort((a, b) => b.created - a.created);
@@ -632,7 +632,7 @@ function scegliModello(lista, escludi, soloGratis) {
 function modelloNonDisponibile(res, data) {
   const msg = String(data && data.error && data.error.message || "").toLowerCase();
   return res.status === 404 || (data && data.error && data.error.code === 404) ||
-    msg.includes("no longer available") || msg.includes("not a valid model") || msg.includes("no endpoints found");
+    msg.includes("no longer available") || msg.includes("not available in your region") || msg.includes("not available in your country") || msg.includes("not a valid model") || msg.includes("no endpoints found");
 }
 if (!Array.isArray(state.players)) state.players = [];
 // Giocatori: { name, g } con g = "M" | "F" (null = da impostare, per i nomi salvati prima)
@@ -928,15 +928,18 @@ async function generaSfida(type) {
     let r = await prova();
 
     // Modello ritirato o non servito: scegline uno disponibile e riprova
-    if (!ok(r) && modelloNonDisponibile(r.res, r.data)) {
+    // (ritirato, non disponibile in questa regione; in modalità Gratis anche se è al limite o non risponde)
+    const daCambiare = (x) => !ok(x) && (modelloNonDisponibile(x.res, x.data) ||
+      (gratis() && [429, 502, 503].includes(x.res.status)));
+    const scartati = new Set();
+    for (let tentativi = 0; tentativi < 5 && daCambiare(r); tentativi++) {
       $("loadingText").textContent = "Cerco un modello disponibile…";
-      const attuale = gratis() ? state.modelFree : normalizzaModello(state.model);
-      const nuovo = scegliModello(await caricaModelli(), attuale, gratis());
-      if (nuovo) {
-        if (gratis()) { state.modelFree = nuovo; store.set("oov_modelFree", nuovo); }
-        else { state.model = nuovo; store.set("oov_model", nuovo); }
-        r = await prova();
-      }
+      scartati.add(gratis() ? state.modelFree : normalizzaModello(state.model));
+      const nuovo = scegliModello(await caricaModelli(), scartati, gratis());
+      if (!nuovo) break;
+      if (gratis()) { state.modelFree = nuovo; store.set("oov_modelFree", nuovo); }
+      else { state.model = nuovo; store.set("oov_model", nuovo); }
+      r = await prova();
     }
     const { res, data } = r;
 
@@ -952,7 +955,7 @@ async function generaSfida(type) {
         429: gratis()
           ? "Limite dei modelli gratuiti raggiunto. Aspetta un po', cambia modello nelle Impostazioni o passa a «A pagamento»."
           : "Troppe richieste ravvicinate. Aspetta qualche secondo e riprova.",
-        403: "Il modello ha rifiutato la richiesta (moderazione). Prova un altro modello.",
+        403: "Questo modello non è utilizzabile (bloccato nella tua zona o richiesta rifiutata). Scegline un altro nelle Impostazioni.",
         404: "Modello non trovato: controlla il nome nelle Impostazioni.",
         408: "Il modello ha impiegato troppo tempo. Riprova.",
         502: "Il provider del modello non risponde. Riprova o cambia modello.",

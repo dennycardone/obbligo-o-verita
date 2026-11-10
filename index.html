@@ -526,7 +526,7 @@ const PROMPTS_LIVELLI = {
   3: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 3 – INTENSITÀ 80% – NUDI. VERITÀ: domande esplicite e dettagliate sulle fantasie più sporche e su cosa vorresti fare o farti fare adesso e da chi dei presenti. OBBLIGHI, azioni ammesse: nudità completa, masturbarsi davanti agli altri, masturbazione reciproca, stimolazione diretta dei genitali con mani, bocca e lingua, sesso orale, sex toys se disponibili, dominazione e sottomissione con ordini da eseguire, bendature e polsi legati, azioni a tre in cui due giocatori si dedicano insieme al terzo. LIMITI: niente penetrazione e niente rapporto completo (è il 100% e resta fuori dal gioco). INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi. DURATA: ogni obbligo ha una durata precisa, sempre scritta nella sfida, compresa tra 30 secondi e 1 minuto e 30 secondi: mai meno di 30 secondi, mai più di 1 minuto e 30. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video."
 };
 
-const VERSIONE = "8";
+const VERSIONE = "9";
 
 const CONFIG = {
   ENDPOINT: "https://openrouter.ai/api/v1/chat/completions",
@@ -535,7 +535,7 @@ const CONFIG = {
   WEB_MAX_RISULTATI: 3,   // quanti risultati web passare al modello
   MAX_STORICO: 15,        // quante sfide recenti ricordare e passare al modello
   TEMPERATURE: 1.0,
-  MAX_TOKENS: 500,
+  MAX_TOKENS: 1500,
   TIMEOUT_MS: 60000
 };
 
@@ -931,12 +931,21 @@ async function generaSfida(type) {
       store.set("oov_modelFree", state.modelFree);
       if (!state.modelFree) throw new Error("Non trovo modelli gratuiti disponibili in questo momento. Passa a «A pagamento» o riprova più tardi.");
     }
+    // Testo della sfida; vuoto se il modello non ha scritto nulla o ha risposto con un rifiuto
+    const RIFIUTO = /^(mi dispiace|mi spiace|non posso|non sono in grado|scusa|i'?m sorry|i am sorry|sorry|i can(no|')t|i won'?t|as an ai)/i;
+    const estrai = (x) => {
+      const c = x.data && x.data.choices && x.data.choices[0] && x.data.choices[0].message && x.data.choices[0].message.content;
+      const t = pulisciTesto(Array.isArray(c) ? c.map((k) => k.text || "").join(" ") : c);
+      return RIFIUTO.test(t) ? "" : t;
+    };
     let r = await prova();
+    if (ok(r) && !estrai(r)) r = await prova();   // risposta vuota: un secondo tentativo con lo stesso modello
 
     // Modello ritirato o non servito: scegline uno disponibile e riprova
     // (ritirato, non disponibile in questa regione; in modalità Gratis anche se è al limite o non risponde)
     const daCambiare = (x) => !ok(x) && (modelloNonDisponibile(x.res, x.data) ||
-      (gratis() && [429, 502, 503].includes(x.res.status)));
+      (gratis() && [429, 502, 503].includes(x.res.status))) ||
+      (gratis() && ok(x) && !estrai(x));
     const scartati = new Set();
     let tentativi = 0;
     for (; tentativi < 12 && daCambiare(r); tentativi++) {
@@ -974,9 +983,10 @@ async function generaSfida(type) {
         (tentativi ? " — Provati " + (tentativi + 1) + " modelli, ultimo: " + (gratis() ? state.modelFree : state.model) + "." : "") + " [v" + VERSIONE + "]");
     }
 
-    const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    const testo = pulisciTesto(Array.isArray(content) ? content.map((c) => c.text || "").join(" ") : content);
-    if (!testo) throw new Error("Il modello ha restituito una risposta vuota. Riprova.");
+    const testo = estrai(r);
+    if (!testo) throw new Error("Il modello non ha scritto la sfida: di solito succede quando rifiuta contenuti spinti. " +
+      (gratis() ? "I modelli gratuiti provati hanno rifiutato: abbassa il livello o passa a «A pagamento»." : "Riprova o scegli un altro modello nelle Impostazioni.") +
+      " [v" + VERSIONE + (tentativi ? ", " + (tentativi + 1) + " modelli" : "") + "]");
 
     // Memoria anti-ripetizione: tieni solo le ultime N sfide
     state.storico.push({ tipo: type, testo });

@@ -218,6 +218,9 @@
   }
   .level[aria-checked="true"] .num { opacity: 1; text-shadow: 0 0 18px var(--c); }
 
+  .plan { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .plan-opt { height: 52px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); font-weight: 700; color: var(--muted); transition: border-color .2s, box-shadow .2s, color .2s; }
+  .plan-opt[aria-checked="true"] { color: var(--text); border-color: var(--accent); box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 35%, transparent); }
   .toggle-row {
     display: flex; align-items: center; justify-content: space-between;
     padding: 14px 16px;
@@ -410,6 +413,15 @@
     </section>
 
     <section class="section">
+      <p class="label">Modalità</p>
+      <div class="plan" role="radiogroup" aria-label="Modalità">
+        <button type="button" class="plan-opt" role="radio" data-plan="gratis" aria-checked="false">Gratis</button>
+        <button type="button" class="plan-opt" role="radio" data-plan="pagamento" aria-checked="true">A pagamento</button>
+      </div>
+      <p class="hint" id="planHint" style="text-align:left"></p>
+    </section>
+
+    <section class="section">
       <label class="toggle-row">
         <span>Ordine dei turni casuale</span>
         <span class="switch"><input type="checkbox" id="randomToggle"><span></span></span>
@@ -481,14 +493,14 @@
         <small>Resta salvata solo su questo dispositivo (localStorage) e viene inviata soltanto a openrouter.ai.</small>
       </div>
       <div class="form-group">
-        <label for="model">Modello</label>
+        <label for="model" id="modelLabel">Modello</label>
         <select class="field model-select" id="modelSelect" aria-label="Scegli un modello disponibile">
           <option value="">Caricamento modelli disponibili…</option>
         </select>
         <input class="field" id="model" type="text" spellcheck="false" autocapitalize="off" aria-label="Nome del modello" style="margin-top:8px">
         <small>Scegli dal menu un modello attivo sul tuo account, oppure scrivine il nome. Se il modello scelto viene ritirato, l'app ne sceglie da sola un altro disponibile.</small>
       </div>
-      <div class="form-group">
+      <div class="form-group" id="webGroup">
         <label class="toggle-row">
           <span>Cerca spunti sul web</span>
           <span class="switch"><input type="checkbox" id="webToggle"><span></span></span>
@@ -562,6 +574,8 @@ const state = {
   apiKey: store.get("oov_apiKey", ""),
   model: store.get("oov_model", CONFIG.MODELLO_DEFAULT),
   web: store.get("oov_web", true),
+  plan: store.get("oov_plan", "pagamento"),     // "gratis" | "pagamento"
+  modelFree: store.get("oov_modelFree", ""),
   turn: 0,
   currentType: null,
   storico: [],            // ultime sfide uscite (max CONFIG.MAX_STORICO)
@@ -575,6 +589,10 @@ const MODELLI_RITIRATI = ["nousresearch/hermes-3-llama-3.1-70b"];
 state.model = normalizzaModello(state.model);
 if (MODELLI_RITIRATI.includes(state.model)) state.model = CONFIG.MODELLO_DEFAULT;
 store.set("oov_model", state.model);
+
+if (state.plan !== "gratis") state.plan = "pagamento";
+const gratis = () => state.plan === "gratis";
+const eGratis = (m) => m.id.endsWith(":free") || m.prezzo === 0;
 
 let cacheModelli = null;
 async function caricaModelli() {
@@ -600,8 +618,10 @@ async function caricaModelli() {
   return lista;
 }
 
-function scegliModello(lista, escludi) {
-  const validi = lista.filter((m) => m.id !== escludi && !m.id.endsWith(":free"));
+function scegliModello(lista, escludi, soloGratis) {
+  const validi = lista
+    .filter((m) => m.id !== escludi && (soloGratis ? eGratis(m) : !eGratis(m)))
+    .sort((a, b) => b.created - a.created);
   for (const re of MODELLI_PREFERITI) {
     const trovati = validi.filter((m) => re.test(m.id)).sort((a, b) => b.created - a.created);
     if (trovati.length) return trovati[0].id;
@@ -685,6 +705,20 @@ document.querySelectorAll(".g-opt").forEach((b) => {
   b.addEventListener("click", () => {
     genereNuovo = b.dataset.g;
     document.querySelectorAll(".g-opt").forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+  });
+});
+
+function renderPlan() {
+  document.querySelectorAll(".plan-opt").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.plan === state.plan)));
+  $("planHint").textContent = gratis()
+    ? "Modello gratuito, senza ricerca web: costo zero, ma con un limite di richieste al giorno e sfide più censurate."
+    : "Modello a pagamento scelto nelle Impostazioni: pochi centesimi a serata.";
+}
+document.querySelectorAll(".plan-opt").forEach((b) => {
+  b.addEventListener("click", () => {
+    state.plan = b.dataset.plan;
+    store.set("oov_plan", state.plan);
+    renderPlan();
   });
 });
 
@@ -859,7 +893,7 @@ async function generaSfida(type) {
 
   const chiama = async (conWeb) => {
     const body = {
-      model: normalizzaModello(state.model),
+      model: gratis() ? state.modelFree : normalizzaModello(state.model),
       messages: buildMessages(player, type),
       temperature: CONFIG.TEMPERATURE,
       max_tokens: CONFIG.MAX_TOKENS
@@ -875,24 +909,32 @@ async function generaSfida(type) {
 
   const ok = (r) => r.res.ok && !(r.data && r.data.error);
   const prova = async () => {
-    const r = await chiama(state.web);
+    const web = state.web && !gratis();
+    const r = await chiama(web);
     // Se il modello non supporta lo strumento di ricerca web, riprova senza
-    if (!ok(r) && state.web && (r.res.status === 400 || r.res.status === 404 || (r.data && r.data.error && [400, 404].includes(r.data.error.code)))) {
+    if (!ok(r) && web && (r.res.status === 400 || r.res.status === 404 || (r.data && r.data.error && [400, 404].includes(r.data.error.code)))) {
       return await chiama(false);
     }
     return r;
   };
 
   try {
+    if (gratis() && !state.modelFree) {
+      $("loadingText").textContent = "Cerco un modello gratuito…";
+      state.modelFree = scegliModello(await caricaModelli(), null, true) || "";
+      store.set("oov_modelFree", state.modelFree);
+      if (!state.modelFree) throw new Error("Non trovo modelli gratuiti disponibili in questo momento. Passa a «A pagamento» o riprova più tardi.");
+    }
     let r = await prova();
 
     // Modello ritirato o non servito: scegline uno disponibile e riprova
     if (!ok(r) && modelloNonDisponibile(r.res, r.data)) {
       $("loadingText").textContent = "Cerco un modello disponibile…";
-      const nuovo = scegliModello(await caricaModelli(), normalizzaModello(state.model));
+      const attuale = gratis() ? state.modelFree : normalizzaModello(state.model);
+      const nuovo = scegliModello(await caricaModelli(), attuale, gratis());
       if (nuovo) {
-        state.model = nuovo;
-        store.set("oov_model", nuovo);
+        if (gratis()) { state.modelFree = nuovo; store.set("oov_modelFree", nuovo); }
+        else { state.model = nuovo; store.set("oov_model", nuovo); }
         r = await prova();
       }
     }
@@ -904,11 +946,15 @@ async function generaSfida(type) {
       const noti = {
         400: "Richiesta non valida: controlla il nome del modello nelle Impostazioni.",
         401: "API Key non valida o scaduta. Controllala nelle Impostazioni.",
-        402: "Credito OpenRouter esaurito. Ricarica il tuo account.",
+        402: gratis()
+          ? "OpenRouter chiede credito anche per questo modello: se il saldo è in negativo, riportalo a zero."
+          : "Credito OpenRouter esaurito. Ricarica il tuo account oppure passa a «Gratis».",
+        429: gratis()
+          ? "Limite dei modelli gratuiti raggiunto. Aspetta un po', cambia modello nelle Impostazioni o passa a «A pagamento»."
+          : "Troppe richieste ravvicinate. Aspetta qualche secondo e riprova.",
         403: "Il modello ha rifiutato la richiesta (moderazione). Prova un altro modello.",
         404: "Modello non trovato: controlla il nome nelle Impostazioni.",
         408: "Il modello ha impiegato troppo tempo. Riprova.",
-        429: "Troppe richieste ravvicinate. Aspetta qualche secondo e riprova.",
         502: "Il provider del modello non risponde. Riprova o cambia modello.",
         503: "Nessun provider disponibile per questo modello in questo momento."
       };
@@ -955,7 +1001,9 @@ function openSettings() {
   $("apiKey").value = state.apiKey;
   $("apiKey").type = "password";
   $("toggleKey").textContent = "Mostra";
-  $("model").value = state.model;
+  $("model").value = gratis() ? state.modelFree : state.model;
+  $("modelLabel").textContent = gratis() ? "Modello gratuito" : "Modello a pagamento";
+  $("webGroup").hidden = gratis();
   $("webToggle").checked = !!state.web;
   riempiMenuModelli();
   $("savedMsg").textContent = "";
@@ -965,14 +1013,18 @@ function closeSettings() { $("settings").hidden = true; }
 
 async function riempiMenuModelli() {
   const sel = $("modelSelect");
-  const lista = await caricaModelli();
+  const lista = (await caricaModelli()).filter((m) => gratis() ? eGratis(m) : !eGratis(m));
   sel.textContent = "";
   const opt = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; return o; };
   if (!lista.length) {
     sel.append(opt("", state.apiKey ? "Elenco non disponibile: scrivi il nome qui sotto" : "Inserisci prima l'API Key e salva"));
     return;
   }
-  const attuale = normalizzaModello($("model").value || state.model);
+  let attuale = String($("model").value || "").trim();
+  if (!attuale && gratis()) {
+    attuale = scegliModello(lista, null, true) || "";
+    $("model").value = attuale;
+  }
   sel.append(opt("", "Scegli un modello…"));
   const prezzo = (m) => m.prezzo ? " · $" + (m.prezzo * 1e6).toFixed(2) + "/M" : " · gratis";
   const consigliati = lista.filter((m) => MODELLI_PREFERITI.some((re) => re.test(m.id))).sort((a, b) => b.created - a.created);
@@ -1003,12 +1055,12 @@ $("toggleKey").addEventListener("click", () => {
 $("settingsForm").addEventListener("submit", (e) => {
   e.preventDefault();
   state.apiKey = $("apiKey").value.trim();
-  state.model = normalizzaModello($("model").value);
+  if (gratis()) { state.modelFree = $("model").value.trim(); store.set("oov_modelFree", state.modelFree); }
+  else state.model = normalizzaModello($("model").value);
   state.web = $("webToggle").checked;
   store.set("oov_web", state.web);
   store.set("oov_apiKey", state.apiKey);
   store.set("oov_model", state.model);
-  $("model").value = state.model;
   $("savedMsg").textContent = "✓ Salvato";
   setTimeout(closeSettings, 700);
 });
@@ -1045,6 +1097,7 @@ $("settingsForm").addEventListener("submit", (e) => {
    ===================================================================== */
 renderPlayers();
 renderLevel();
+renderPlan();
 </script>
 </body>
 </html>

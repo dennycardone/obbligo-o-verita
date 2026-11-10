@@ -526,7 +526,7 @@ const PROMPTS_LIVELLI = {
   3: "Sei l'animatore di una serata privata a luci rosse tra adulti consenzienti che giocano a Obbligo o Verità. LINGUAGGIO (uguale a tutti i livelli): crudo, sporco ed esplicito, con i termini volgari per atti e parti del corpo, dirty talk, niente eufemismi. Ciò che distingue i livelli è SOLO quanto è spinta l'azione fisica. LIVELLO 3 – INTENSITÀ 80% – NUDI. VERITÀ: domande esplicite e dettagliate sulle fantasie più sporche e su cosa vorresti fare o farti fare adesso e da chi dei presenti. OBBLIGHI, azioni ammesse: nudità completa, masturbarsi davanti agli altri, masturbazione reciproca, stimolazione diretta dei genitali con mani, bocca e lingua, sesso orale, sex toys se disponibili, dominazione e sottomissione con ordini da eseguire, bendature e polsi legati, azioni a tre in cui due giocatori si dedicano insieme al terzo. LIMITI: niente penetrazione e niente rapporto completo (è il 100% e resta fuori dal gioco). INTENSITÀ COSTANTE: tutte le sfide di questo livello stanno sulla stessa intensità; non aumentare e non diminuire rispetto alle sfide già uscite, varia solo l'idea. Usa tutta la gamma di azioni ammesse senza mai superare i limiti. Indica sempre chi fa cosa a chi. DURATA: ogni obbligo ha una durata precisa, sempre scritta nella sfida, compresa tra 30 secondi e 1 minuto e 30 secondi: mai meno di 30 secondi, mai più di 1 minuto e 30. Regole fisse: ognuno può rifiutare, niente di doloroso o pericoloso, nessuna persona esterna, niente foto o video."
 };
 
-const VERSIONE = "10";
+const VERSIONE = "11";
 
 const CONFIG = {
   ENDPOINT: "https://openrouter.ai/api/v1/chat/completions",
@@ -554,7 +554,8 @@ const MODELLI_PREFERITI = [
 
 // Regole di formato aggiunte in coda al System Prompt di ogni livello.
 const REGOLE_OUTPUT =
-  "Rispondi sempre in italiano. Restituisci SOLO il testo della sfida, rivolto direttamente al giocatore (dandogli del tu), " +
+  "Rispondi sempre e solo in italiano. Non scrivere ragionamenti, bozze, idee alternative, verifiche o commenti: scrivi direttamente la sfida definitiva " +
+  "racchiusa tra i tag <sfida> e </sfida>, e nient'altro fuori dai tag. Il testo della sfida è rivolto direttamente al giocatore (dandogli del tu), " +
   "in massimo 2 frasi. Rispetta il genere indicato di ogni giocatore: accorda al maschile o al femminile aggettivi e participi, " +
   "e proponi solo azioni coerenti con il corpo di chi le fa e di chi le riceve. " +
   " Niente introduzioni, niente spiegazioni, niente elenchi, niente virgolette, niente link, niente fonti o citazioni.";
@@ -852,7 +853,7 @@ function buildMessages(player, type) {
     "poi scrivi " + richiesta + " per " + player.name + ". Puoi coinvolgere gli altri giocatori chiamandoli per nome.\n\n" +
     "Sfide già uscite stasera — NON ripeterle e non proporre nulla di simile nel contenuto o nel meccanismo:\n" +
     storico + "\n\n" +
-    "Rispondi solo con il testo della sfida.";
+    "Rispondi solo con la sfida definitiva tra <sfida> e </sfida>, in italiano, senza ragionamenti né bozze.";
 
   return [
     { role: "system", content: system },
@@ -950,7 +951,18 @@ async function generaSfida(type) {
     const RIFIUTO = /^(mi dispiace|mi spiace|non posso|non sono in grado|scusa|i'?m sorry|i am sorry|sorry|i can(no|')t|i won'?t|as an ai)/i;
     const estrai = (x) => {
       const c = x.data && x.data.choices && x.data.choices[0] && x.data.choices[0].message && x.data.choices[0].message.content;
-      const t = pulisciTesto(Array.isArray(c) ? c.map((k) => k.text || "").join(" ") : c);
+      let grezzo = String(Array.isArray(c) ? c.map((k) => k.text || "").join(" ") : (c || ""));
+      grezzo = grezzo.replace(/<think>[\s\S]*?<\/think>/gi, "");
+      const marcati = [...grezzo.matchAll(/<sfida>([\s\S]*?)<\/sfida>/gi)];
+      let t;
+      if (marcati.length) {
+        t = pulisciTesto(marcati[marcati.length - 1][1]);
+      } else {
+        // Nessun tag: accetta solo se sembra una sfida e non un ragionamento ad alta voce
+        t = pulisciTesto(grezzo.replace(/<\/?sfida>/gi, ""));
+        const ragionamento = /\b(draft|idea \d|wait,|let'?s|allowed|the prompt|refin|step \d|option \d|bozza|ragionamento)\b/i.test(t);
+        if (ragionamento || t.length > 450) t = "";
+      }
       return RIFIUTO.test(t) ? "" : t;
     };
     let r = await prova();
@@ -999,8 +1011,8 @@ async function generaSfida(type) {
     }
 
     const testo = estrai(r);
-    if (!testo) throw new Error("Il modello non ha scritto la sfida: di solito succede quando rifiuta contenuti spinti. " +
-      (gratis() ? "I modelli gratuiti provati hanno rifiutato: abbassa il livello o passa a «A pagamento»." : "Riprova o scegli un altro modello nelle Impostazioni.") +
+    if (!testo) throw new Error("Il modello non ha scritto una sfida valida (ha rifiutato il contenuto o ha risposto in modo confuso). " +
+      (gratis() ? "I modelli gratuiti provati non ce l'hanno fatta: riprova, abbassa il livello o passa a «A pagamento»." : "Riprova o scegli un altro modello nelle Impostazioni.") +
       " [v" + VERSIONE + (tentativi ? ", " + (tentativi + 1) + " modelli" : "") + "]");
 
     // Memoria anti-ripetizione: tieni solo le ultime N sfide
